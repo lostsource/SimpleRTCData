@@ -1,10 +1,13 @@
-function SimpleRTCData() {
+/* global RTCSessionDescription, RTCIceCandidate */
+'use strict';
+
+function SimpleRTCData(inServers,inConstraints) {
     // this is set to 'offer' or 'answer' depending on call to getOffer or getAnswer
     var inMode = null; 
 
     function getRTCConnection() {
-        var servers = null;
-        var constraints = {
+        var servers = inServers;
+        var constraints = inConstraints || {
             optional: [
                 {
                     DtlsSrtpKeyAgreement: true
@@ -12,7 +15,9 @@ function SimpleRTCData() {
             ]
         };
 
-        return new webkitRTCPeerConnection(servers,constraints);
+        window.RTCPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection;
+
+        return new window.RTCPeerConnection(servers,constraints);
     }
 
     var ChannelEventHandlers = {};
@@ -20,7 +25,7 @@ function SimpleRTCData() {
     var DataChannel = null;
 
     function forwardEventToHandler(evName,context,event) {
-        if(typeof(ChannelEventHandlers[evName]) === "undefined") {
+        if(typeof(ChannelEventHandlers[evName]) === 'undefined') {
             // no event handlers
             return true;
         }
@@ -30,31 +35,32 @@ function SimpleRTCData() {
         }
     }
 
+    function registerChannelEvent(channel,evName) {
+        channel.addEventListener(evName,function(e){
+            forwardEventToHandler(evName,this,e);
+        });
+    }
+
     function registerChannelEvents(channel) {
         var handledEvents = ['open','close','error','message'];
         for(var x = 0; x < handledEvents.length; x++) {
-            (function(evName){
-
-                channel.addEventListener(evName,function(e){
-                    forwardEventToHandler(evName,this,e);
-                });
-            })(handledEvents[x]);
+            registerChannelEvent(channel,handledEvents[x]);
         }
     }
 
     Connection.ondatachannel = function(e) {
         registerChannelEvents(e.channel);
-    }
+    };
 
     this.getOffer = function(callback) {
         if(inMode !== null) {
-            throw new Error("getOffer cannot be called with getAnswer");
+            throw new Error('getOffer cannot be called with getAnswer');
         }
 
         inMode = 'offer';
 
-        if(typeof(callback) !== "function") {
-            throw new Error("getOffer requires first argument to be a callback");
+        if(typeof(callback) !== 'function') {
+            throw new Error('getOffer requires first argument to be a callback');
         }
         
 
@@ -64,7 +70,7 @@ function SimpleRTCData() {
 
 
         DataChannel = Connection.createDataChannel(
-            "sendDataChannel",
+            'SimpleRTCDataChannel',
             {reliable: true, ordered:true}
         );
 
@@ -94,7 +100,7 @@ function SimpleRTCData() {
             else {
                 doCallback(offerSDP,iceList);
             }
-        }
+        };
 
         Connection.createOffer(function(inOfferSDP){
             Connection.setLocalDescription(inOfferSDP,
@@ -110,19 +116,19 @@ function SimpleRTCData() {
             // createOffer failed
             doCallback(null);
         });
-    }
+    };
 
     this.setAnswer = function(answer) {
-        if(typeof(answer) === "string") {
+        if(typeof(answer) === 'string') {
             try {
                 answer = JSON.parse(answer);
             }
             catch(e){
-                throw new Error("setAnswer: Invalid answer, this should be the result of a call to getAnswer");
-            };
+                throw new Error('setAnswer: Invalid answer, this should be the result of a call to getAnswer');
+            }
         }
         else {
-            throw new Error("setAnswer: Argument 1 must be the result of a call to getAnswer");
+            throw new Error('setAnswer: Argument 1 must be the result of a call to getAnswer');
         }        
 
         var remoteSDP = new RTCSessionDescription(answer.sdp);
@@ -136,31 +142,31 @@ function SimpleRTCData() {
 
         },function(){
             // failed to set remote desc, trigger error TODO
-            throw new Error("setAnswer: Failed to setRemoteDescription")
+            throw new Error('setAnswer: Failed to setRemoteDescription');
         });
-    }
+    };
 
     this.getAnswer = function(offer,callback) {
         if(inMode !== null) {
-            throw new Error("getAnswer cannot be called with getOffer");
+            throw new Error('getAnswer cannot be called with getOffer');
         }
 
         inMode = 'answer';
 
-        if(typeof(offer) === "string") {
+        if(typeof(offer) === 'string') {
             try {
                 offer = JSON.parse(offer);
             }
             catch(e){
-                throw new Error("getAnswer: Invalid offer, this should be the result of a call to getOffer");
-            };
+                throw new Error('getAnswer: Invalid offer, this should be the result of a call to getOffer');
+            }
         }
         else {
-            throw new Error("getAnswer: Argument 1 must be the result of a call to getOffer");
+            throw new Error('getAnswer: Argument 1 must be the result of a call to getOffer');
         }
 
-        if(typeof(callback) !== "function") {
-            throw new Error("getAnswer requires second argument to be a callback");
+        if(typeof(callback) !== 'function') {
+            throw new Error('getAnswer requires second argument to be a callback');
         }
 
         var iceList = [];
@@ -188,7 +194,7 @@ function SimpleRTCData() {
             else {
                 doCallback(answerSDP,iceList);
             }
-        }
+        };
 
         var remoteDescriptor = new RTCSessionDescription(offer.sdp);
 
@@ -217,10 +223,10 @@ function SimpleRTCData() {
             // failed to set remote description
             doCallback(null);
         });
-    }
+    };
 
     this.onChannelEvent = function(evName,evHandler) {
         ChannelEventHandlers[evName] = ChannelEventHandlers[evName] || [];
         ChannelEventHandlers[evName].push(evHandler);
-    }
+    };
 }
