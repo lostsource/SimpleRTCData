@@ -10,7 +10,9 @@ function SimpleRTCData(inServers,inConstraints) {
     var IceCandidate = window.mozRTCIceCandidate || window.webkitRTCIceCandidate || window.RTCIceCandidate;
 
     function getRTCConnection() {
-        var servers = inServers;
+        var servers = inServers || {'iceServers': [
+            {'urls': 'stun:stun.l.google.com:19302'}
+        ]};
         var constraints = inConstraints || {
             optional: [
                 {
