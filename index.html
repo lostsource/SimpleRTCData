@@ -1,80 +1,454 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+<head>
+	<title>SimpleRTCData Example</title>
+	<script type='text/javascript' src='javascripts/SimpleRTCData.js'></script>
+	<script type='text/javascript'>
 
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+	function showCode (readyCB, container, message, index) {    
+		// adapted from http://stackoverflow.com/a/7265613/149636 
+		if(typeof(index) === "undefined") {
+			index = 0;
+		}
 
-    <title>SimpleRTCData by lostsource</title>
-  </head>
+		if (index < message.length) { 
+			container.appendChild(document.createTextNode(message[index++]));
+			setTimeout(function () { 
+				showCode(readyCB, container, message, index); 
+			}, 5); 
+		}
+		else {
+			readyCB();
+		} 
+	}
+   
 
-  <body>
-    <header>
-      <div class="inner">
-        <h1>SimpleRTCData</h1>
-        <h2>SimpleRTCData is a JavaScript library which can be used to establish an RTCDataChannel between two peers.</h2>
-        <a href="https://github.com/lostsource/SimpleRTCData" class="button"><small>View project on</small> GitHub</a>
-      </div>
-    </header>
+	</script>
+	<script type='text/javascript'>
+		var code = {
+			bertsOffer: "var BertRTC = new SimpleRTCData;\nBertRTC.getOffer(function(offer) {\n  // 'offer' has to be sent to Ernie\n});",
+			erniesAnswer: "var ErnieRTC = new SimpleRTCData;\n\nErnieRTC.onChannelEvent('message',function(e) {\n  // get ready for messages from Bert \n  console.log(e.data);\n});\n\nErnieRTC.getAnswer(offer,function(answer) {\n  // 'answer' has to be sent to Bert\n});",
+			bertSetAnswer: "BertRTC.onChannelEvent('open',function(){\n  // Bert's ready to send messages\n\n});\n\nBertRTC.setAnswer(answer);"
+		}
 
-    <div id="content-wrapper">
-      <div class="inner clearfix">
-        <section id="main-content">
-          <h2>
-<a id="simplertcdata" class="anchor" href="#simplertcdata" aria-hidden="true"><span class="octicon octicon-link"></span></a>SimpleRTCData</h2>
+		window.addEventListener('load',function(){
+			var BertRTC = null, BertChan = null, ErnieRTC = null;
 
-<p>SimpleRTCData can be used to establish an RTCDataChannel between two or more peers. It does not handle the signalling stage so you will need to implement your own mechanism for that.</p>
+			var elmBertsOffer = document.getElementById('bertsOffer');
+			var elmErniesAnswer = document.getElementById('erniesAnswer');
+			var elmCreateOffer = document.getElementById('bttCreateOffer');
+			var elmCreateAnswer = document.getElementById('bttCreateAnswer');
+			var elmOfferResult = document.getElementById('bertsOfferResult');
+			var elmErnieOfferHolder = document.getElementById('ernieOfferHolder');
+			var elmErnieAnswerHolder = document.getElementById('ernieAnswerHolder');
 
-<h3>
-<a id="basic-usage" class="anchor" href="#basic-usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Basic Usage</h3>
+			var elmBertsAnswerGuide = document.getElementById('bertsAnswerGuide');
+			var elmBertsAnswerHolder = document.getElementById('bertsAnswerHolder');
+			var elmBertSetAnswer = document.getElementById('bertSetAnswer');
 
-<p>Assuming two peers Bert and Ernie in which Bert is the initiator, Bert needs to make an 'offer' to Ernie by calling the <code>getOffer</code> method:</p>
+			var elmBertSendMsg = document.getElementById('bertSendMessage');
+			var elmBertMsgNpt = document.getElementById('msgSender');
 
-<pre><code>var BertRTC = new SimpleRTCData;
-BertRTC.getOffer(function(bertsOffer) {
-  // 'bertsOffer' is the string to be sent to Ernie
-});
-</code></pre>
+			var elmMsgReceiver = document.getElementById('msgReceiver');
 
-<p>At this point the offer needs to be sent to Ernie in any way preferred, WebSockets, E-mail, magic etc.. Once Ernie receives Bert's offer he will need to create an 'answer' by passing it as the first argument to <code>getAnswer</code>: </p>
+			elmBertMsgNpt.addEventListener('keydown',function(e){
+				if(!BertChan) {
+					return;
+				}
 
-<pre><code>var ErnieRTC = new SimpleRTCData;
-ErnieRTC.getAnswer(bertsOffer,function(erniesAnswer) {
-  // 'erniesAnswer' is the string to be sent to Bert
-});
-</code></pre>
+				if(e.keyCode === 13) {
+					BertChan.send(this.value);
+					this.value = "";
+				}
+			});
 
-<p>Again, the transport used to send <code>erniesAnswer</code> is not relevant however Bert will need to use it's value to call <code>setAnswer</code></p>
+			elmCreateOffer.addEventListener('click',function(){
+				elmBertsOffer.innerHTML = "";
 
-<pre><code>BertRTC.setAnswer(erniesAnswer);
-</code></pre>
-        </section>
+				showCode(function(){
+					BertRTC = new SimpleRTCData;
+					BertRTC.getOffer(function(bertsOffer) {
+						elmOfferResult.innerHTML = bertsOffer;
+						elmOfferResult.style.opacity = 1;
+						elmBertsAnswerGuide.style.opacity = 1;
+						elmBertsAnswerHolder.style.opacity = 1;
 
-        <aside id="sidebar">
-          <a href="https://github.com/lostsource/SimpleRTCData/zipball/master" class="button">
-            <small>Download</small>
-            .zip file
-          </a>
-          <a href="https://github.com/lostsource/SimpleRTCData/tarball/master" class="button">
-            <small>Download</small>
-            .tar.gz file
-          </a>
+						elmCreateOffer.disabled = true;
+					});
 
-          <p class="repo-owner"><a href="https://github.com/lostsource/SimpleRTCData"></a> is maintained by <a href="https://github.com/lostsource">lostsource</a>.</p>
+				},elmBertsOffer,code.bertsOffer);
+			});
 
-          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
-        </aside>
-      </div>
-    </div>
+			elmBertsAnswerHolder.addEventListener('input',function(){
+				var answerVal = this.value.trim();
+				// check if it parses as JSON
+				try {
+					var answerObj = JSON.parse(answerVal);
+					if(!((answerObj.sdp) && (answerObj.sdp.type === 'answer'))) {
+						console.warn("INVALID ANSWER CONTENT");
+						return;
+					}
 
+					showCode(function(){
+						BertRTC.onChannelEvent('open',function(){
+							// triggered when we're read to send a message
+							elmBertSendMsg.style.display = "block";
+							elmBertMsgNpt.style.display = "inline";
+							elmBertMsgNpt.focus();
+							BertChan = this;
+						});
+						BertRTC.setAnswer(answerVal);	
+
+					},elmBertSetAnswer,code.bertSetAnswer);
+					
+				}
+				catch(e){
+					console.warn("INVALID ANSWER JSON");
+				};
+			});
+
+			elmOfferResult.addEventListener('click',function(){
+				this.select();
+			});
+
+			elmErnieAnswerHolder.addEventListener('click',function(){
+				this.select();
+			});
+
+
+			elmCreateAnswer.addEventListener('click',function(){
+				elmErniesAnswer.innerHTML = "";
+
+				showCode(function(){
+					ErnieRTC = new SimpleRTCData;
+					ErnieRTC.onChannelEvent('message',function(e) {
+						// get ready for messages from Bert 
+						elmMsgReceiver.innerHTML = "";
+						elmMsgReceiver.appendChild(document.createTextNode(e.data));
+						elmMsgReceiver.style.opacity = 1;
+					});
+					ErnieRTC.getAnswer(elmErnieOfferHolder.value.trim(),function(erniesAnswer) {
+						elmErnieAnswerHolder.innerHTML = erniesAnswer;
+						elmErnieAnswerHolder.style.opacity = 1;
+						elmCreateAnswer.disabled = true;
+					});
+
+				},elmErniesAnswer,code.erniesAnswer);
+			});
+
+			elmErnieOfferHolder.addEventListener('input',function(){
+				var offerVal = this.value;
+				offerVal = offerVal.trim();
+
+				if(offerVal.length > 0) {
+					elmCreateAnswer.disabled = false;
+				}
+				else {
+					elmCreateAnswer.disabled = true;
+				}
+			});
+			
+		});
+	</script>
+	<style type='text/css'>
+
+		body {
+			background-color:#eeeeee;
+			margin:0;
+			font-family:sans-serif;
+			min-width:1000px;
+			/*max-width:1200px;*/
+		}
+
+		pre {
+			color: rgb(134, 88, 28);
+		}
+
+		#bertWindow {
+			float:left;
+		}
+
+		#ernieWindow {
+			float:right;
+		}
+
+		.peerWindow {
+			width: 450px;
+			height: 550px;
+			border: 1px solid rgb(169, 169, 169);
+			background-color: white;
+			border-radius: 3px;
+			box-shadow: 0px 0px 7px 0px #aaaaaa;
+			margin: 20px;
+		}
+
+		#bertThumb {
+			background-image:url('assets/bert.png');
+			width:128px; height:128px;
+			background-size:100%;
+			border-radius:3px;
+			box-shadow: 0px 0px 5px 0px #777777;
+			position:absolute;
+			top:10px; left:10px;
+		}
+
+		#ernieThumb {
+			background-image:url('assets/ernie.png');
+			width:128px; height:128px;
+			background-size:100%;
+			border-radius:3px;
+			box-shadow: 0px 0px 5px 0px #777777;
+			position:absolute;
+			top:10px; right:10px;
+		}
+
+		#bertsOffer {
+			position: absolute;
+			left: 160px;
+			top: 60px;
+		}
+
+		#erniesAnswer {
+			position: absolute;
+			left: 20px;
+			top: 170px;
+		}
+
+		#bertsOfferGuide {
+			position:absolute;
+			top:10px;
+			left:150px;
+		}
+
+
+		#erniesOfferGuide {
+			position:absolute;
+			top:5px;
+			left:10px;
+		}
+
+
+		#erniesAnswerGuide {
+			position:absolute;
+			top:150px;
+			left:10px;
+		}
+
+		.stepGuide {
+			font-size:small;
+			line-height: 25px;
+		}
+
+		#bertsOfferResult {
+			width: 410px;
+			height: 80px;
+			left: 10px;
+			top: 150px;
+			position: absolute;
+			resize: none;
+			opacity:0;
+			transition:opacity 200ms ease-in;
+		}
+
+		#bertsOfferResult:focus {
+			outline:none;
+
+		}
+
+		#ernieOfferHolder {
+			width: 270px;
+			height: 87px;
+			left: 10px;
+			top: 35px;
+			position: absolute;
+			resize:none;
+		}
+
+		#ernieOfferHolder:focus {
+			outline:none;
+		}
+
+		.offerArea {
+			background-color: rgba(177, 240, 22, 0.09);
+  			border-color: rgb(203, 207, 80);
+  			border-width: 2px;
+  			border-radius: 4px;
+			padding:6px;
+		}
+
+		.answerArea {
+			background-color: rgba(22, 215, 240, 0.09);
+			border-color: rgb(80, 178, 207);
+			border-width: 2px;
+			border-radius: 4px;	
+			padding:6px;
+		}
+
+		#ernieAnswerHolder {
+			position: absolute;
+			top: 350px;
+			left: 10px;
+			width: 410px;
+			height: 90px;
+			opacity:0;
+			transition:opacity 200ms ease-in;
+		}
+
+		#ernieAnswerHolder:focus {
+			outline:none;
+		}
+
+		#bertsAnswerGuide {
+			position: absolute;
+			top: 255px;
+			left: 10px;
+			opacity:0;
+			transition:opacity 200ms ease-in;			
+		}
+
+
+		#bertsAnswerHolder {
+			position: absolute;
+			top: 290px;
+			left: 10px;
+			width: 410px;
+			height: 90px;
+			opacity:0;
+			transition:opacity 200ms ease-in;			
+		}
+
+		#bertSetAnswer {
+			position: absolute;
+			top: 400px;
+			left: 12px;
+		}
+
+		textarea {
+			font-size:small;
+		}
+
+		#msgSender {
+			position: absolute;
+			top: 444px;
+			font-size: small;
+			font-family: monospace;
+			padding: 0;
+			border: 0;
+			left: 106px;
+  			width: 119px;
+  			border-bottom: 1px solid #cccccc;
+			display: none;
+		}
+
+		#bertSendMessage {
+			position: absolute;
+			top: 430px;
+			left: 26px;
+			display: none;
+		}
+
+		#msgSender:focus {
+			outline:none;
+		}
+
+		/* message bubble via http://www.ilikepixels.co.uk/drop/bubbler/*/
+		.bubble 
+		{
+		position: relative;
+		width: 190px;
+		height: 24px;
+		padding: 0px;
+		background: rgba(56, 132, 19, 0.92);;
   
-  </body>
+		-webkit-border-radius: 6px;
+		-moz-border-radius: 6px;
+		border-radius: 5px;
+		border: rgba(56, 132, 19, 0.92) solid 1px;
+		color: white;
+		font-size: small;
+		font-family: monospace;
+		line-height: 24px;
+		padding-left: 5px;
+		padding-right: 5px;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		opacity:0;
+		transition:opacity 100ms ease-in;
+		font-weight: bold;
+		}
+
+		.bubble:after 
+		{
+		content: '';
+		position: absolute;
+		border-style: solid;
+		border-width: 0 11px 22px;
+		border-color: rgba(56, 132, 19, 0.92) transparent;
+		display: block;
+		width: 0;
+		z-index: 1;
+		top: -22px;
+		left: 19px;
+		}
+
+		.bubble:before 
+		{
+		content: '';
+		position: absolute;
+		border-style: solid;
+		border-width: 0 11px 22px;
+		border-color: rgba(129, 129, 129, 0.92) transparent;
+		display: block;
+		width: 0;
+		z-index: 0;
+		top: -23px;
+		left: 19px;
+		}
+
+		#msgBubble {
+			position: absolute;
+			top: 270px;
+			left: 154px;
+		}
+	</style>
+
+</head>
+<body>
+
+<div id='bertWindow' class='peerWindow'>
+	<div style='position:relative; width:100%; height:100%;'>
+		<div id='bertThumb'></div>
+		<div class='stepGuide' id='bertsOfferGuide'>Bert is the <em>initiator</em>.<br/>He must first <button id='bttCreateOffer'>create an offer</button></div>
+
+		<pre id='bertsOffer'></pre>
+
+		<textarea id='bertsOfferResult' class='offerArea' readonly='true' placeholder='Bert&apos;s offer will appear here..'></textarea>
+
+		<div class='stepGuide' id='bertsAnswerGuide'>Bert is now waiting for Ernie to <em>create an answer</em>..</div>		
+		<textarea id='bertsAnswerHolder' class='answerArea' placeholder='This is where Bert should enter Earnie&apos;s answer'></textarea>
+		<pre id='bertSetAnswer'></pre>
+		<pre id='bertSendMessage'>this.send("                 ");</pre>
+		<input type='text' id='msgSender' placeholder='type &amp; hit enter!'/>
+	</div>
+</div>
+
+<div id='ernieWindow' class='peerWindow'>
+	<div style='position:relative; width:100%; height:100%;'>
+		<div id='ernieThumb'></div>
+		<div class='stepGuide' id='erniesOfferGuide'>Ernie is waiting for Bert <em>create an offer</em>..</div>
+		<pre id='erniesAnswer'></pre>
+
+		<textarea id='ernieOfferHolder' class='offerArea' placeholder='This is where Earnie should enter Bert&apos;s offer..'></textarea>
+
+		<div id='erniesAnswerGuide' class='stepGuide'>Once he has an offer he will be able to <button id='bttCreateAnswer' disabled>create an answer</button></div>
+
+		<textarea id='ernieAnswerHolder' readonly='true' class='answerArea' placeholder='Ernie&apos;s Answer will appear here..'></textarea>
+
+		<div id='msgBubble'>
+			<div class='bubble' id='msgReceiver'></div>
+		</div>
+	</div>
+</div>
+
+</body>
 </html>
