@@ -48,6 +48,22 @@ function SimpleRTCData(inServers,inConstraints) {
         }
     }
 
+    function getSDPCopy(detail) {
+      // we need to do this separately as Chrome Dev 43 fails to stingify
+      return { 
+        type: detail.type,
+        sdp: detail.sdp
+      };
+    }
+    
+    function getCandidateCopy(detail) {
+      return {
+        candidate: detail.candidate, 
+        sdpMid: detail.sdpMid,
+        sdpMLineIndex: detail.sdpMLineIndex
+      };
+    }
+
     Connection.ondatachannel = function(e) {
         registerChannelEvents(e.channel);
     };
@@ -83,10 +99,10 @@ function SimpleRTCData(inServers,inConstraints) {
             }
 
             didCallback = true;
-
+            
             callback(
                 JSON.stringify({
-                    sdp: offerSDP,
+                    sdp: getSDPCopy(offerSDP),
                     icecandidates: iceList
                 })
             );
@@ -95,7 +111,7 @@ function SimpleRTCData(inServers,inConstraints) {
         Connection.onicecandidate = function(e) {
             /// FIXME we're assuming last candidate is null, callback might never be called or called to early
             if(e.candidate) {
-                iceList.push(e.candidate);
+                iceList.push(getCandidateCopy(e.candidate));
             }
             else {
                 doCallback(offerSDP,iceList);
@@ -182,14 +198,14 @@ function SimpleRTCData(inServers,inConstraints) {
             didCallback = true;
 
             callback(JSON.stringify({
-                sdp: answerSDP,
+                sdp: getSDPCopy(answerSDP),
                 icecandidates: iceList
             }));
         }
 
         Connection.onicecandidate = function(e) {
             if(e.candidate) {
-                iceList.push(e.candidate);
+                iceList.push(getCandidateCopy(e.candidate));
             }
             else {
                 doCallback(answerSDP,iceList);
