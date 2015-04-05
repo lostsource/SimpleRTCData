@@ -1,9 +1,13 @@
-/* global RTCSessionDescription, RTCIceCandidate */
+/* global  window */
 'use strict';
-
+  
 function SimpleRTCData(inServers,inConstraints) {
     // this is set to 'offer' or 'answer' depending on call to getOffer or getAnswer
     var inMode = null; 
+
+    var PeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+    var SessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
+    var IceCandidate = window.mozRTCIceCandidate || window.webkitRTCIceCandidate || window.RTCIceCandidate;
 
     function getRTCConnection() {
         var servers = inServers;
@@ -15,9 +19,7 @@ function SimpleRTCData(inServers,inConstraints) {
             ]
         };
 
-        window.RTCPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection;
-
-        return new window.RTCPeerConnection(servers,constraints);
+        return new PeerConnection(servers,constraints);
     }
 
     var ChannelEventHandlers = {};
@@ -147,17 +149,16 @@ function SimpleRTCData(inServers,inConstraints) {
             throw new Error('setAnswer: Argument 1 must be the result of a call to getAnswer');
         }        
 
-        var remoteSDP = new RTCSessionDescription(answer.sdp);
+        var remoteSDP = new SessionDescription(answer.sdp);
         Connection.setRemoteDescription(remoteSDP,function(){
 
             // add ice candidates
             for(var x = 0; x < answer.icecandidates.length; x++) {
-                var rtcCand = new RTCIceCandidate(answer.icecandidates[x]);
+                var rtcCand = new IceCandidate(answer.icecandidates[x]);
                 Connection.addIceCandidate(rtcCand);
             }
 
         },function(){
-            // failed to set remote desc, trigger error TODO
             throw new Error('setAnswer: Failed to setRemoteDescription');
         });
     };
@@ -212,7 +213,7 @@ function SimpleRTCData(inServers,inConstraints) {
             }
         };
 
-        var remoteDescriptor = new RTCSessionDescription(offer.sdp);
+        var remoteDescriptor = new SessionDescription(offer.sdp);
 
         Connection.setRemoteDescription(remoteDescriptor,function(){
             Connection.createAnswer(function(inAnswerSDP){
@@ -222,7 +223,7 @@ function SimpleRTCData(inServers,inConstraints) {
 
                     // add ice candidates
                     for(var x = 0; x < offer.icecandidates.length; x++) {
-                        var rtcCand = new RTCIceCandidate(offer.icecandidates[x]);
+                        var rtcCand = new IceCandidate(offer.icecandidates[x]);
                         Connection.addIceCandidate(rtcCand);             
                     }
 
