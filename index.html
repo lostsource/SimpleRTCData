@@ -93,6 +93,7 @@
 					BertRTC = new SimpleRTCData;
 
 					elmBertWindow.classList.add('execWait');
+					elmBertWindow.classList.add('waitingForAnswer');
 
 					BertRTC.getOffer(function(bertsOffer) {
 						elmOfferResult.value = bertsOffer;
@@ -122,6 +123,7 @@
 						return;
 					}
 
+					elmBertWindow.classList.add('settingAnswer');
 					showCode(function(){
 						BertRTC.onChannelEvent('open',function(){
 							// triggered when we're read to send a message
@@ -170,8 +172,15 @@
 
 				elmErniesAnswer.innerHTML = "";
 
+				elmErnieWindow.classList.add('writingAnswerCode');
+
 				showCode(function(){
+
 					ErnieRTC = new SimpleRTCData;
+					ErnieRTC.onError = function(error) {
+						console.warn(error);
+					}
+
 					ErnieRTC.onChannelEvent('message',function(e) {
 						// get ready for messages from Bert 
 						elmMsgReceiver.innerHTML = "";
@@ -186,6 +195,7 @@
 						elmCreateAnswer.disabled = true;
 						elmErnieOfferHolder.readOnly = true;
 						elmErnieWindow.classList.remove('execWait');
+						elmErnieWindow.classList.add('showingAnswer');
 					});
 
 				},elmErniesAnswer,code.erniesAnswer);
@@ -221,10 +231,29 @@
 
 		#bertWindow {
 			float:left;
+			height:150px;
+			
+		}
+
+		#bertWindow.waitingForAnswer {
+			height:407px;
+		}
+
+		#bertWindow.settingAnswer {
+			height:510px;
 		}
 
 		#ernieWindow {
 			float:right;
+			height:182px;
+		}
+
+		#ernieWindow.writingAnswerCode {
+			height:345px;
+		}
+
+		#ernieWindow.showingAnswer {
+			height:470px;
 		}
 
 		.execWait {
@@ -232,6 +261,7 @@
 		}
 
 		.peerWindow {
+			transition:height 100ms ease-in;
 			background-repeat:no-repeat;
 			background-position: 95% 95%;
 			width: 450px;
@@ -265,8 +295,8 @@
 
 		#bertsOffer {
 			position: absolute;
-			left: 160px;
-			top: 60px;
+			left: 150px;
+			top: 55px;
 		}
 
 		#erniesAnswer {
@@ -490,42 +520,49 @@
 			top: 270px;
 			left: 154px;
 		}
+
+		#peerWindowContainer {
+			width:1020px;
+			margin:10px auto;
+		}
 	</style>
 
 </head>
 <body>
+<h3 style='text-align:center;'>SimpleRTCData is available on <a href='https://github.com/lostsource/SimpleRTCData'>Github</a></h3>
+<div id='peerWindowContainer'>
+	<div id='bertWindow' class='peerWindow'>
+		<div style='position:relative; width:100%; height:100%;'>
+			<div id='bertThumb'></div>
+			<div class='stepGuide' id='bertsOfferGuide'>Bert is the <em>initiator</em>.<br/>He must first <button id='bttCreateOffer'>create an offer</button></div>
 
-<div id='bertWindow' class='peerWindow'>
-	<div style='position:relative; width:100%; height:100%;'>
-		<div id='bertThumb'></div>
-		<div class='stepGuide' id='bertsOfferGuide'>Bert is the <em>initiator</em>.<br/>He must first <button id='bttCreateOffer'>create an offer</button></div>
+			<pre id='bertsOffer'></pre>
 
-		<pre id='bertsOffer'></pre>
+			<textarea id='bertsOfferResult' class='offerArea' readonly='true' placeholder='Bert&apos;s offer will appear here..'></textarea>
 
-		<textarea id='bertsOfferResult' class='offerArea' readonly='true' placeholder='Bert&apos;s offer will appear here..'></textarea>
-
-		<div class='stepGuide' id='bertsAnswerGuide'>Bert is now waiting for Ernie to <em>create an answer</em>..</div>		
-		<textarea id='bertsAnswerHolder' class='answerArea' placeholder='This is where Bert should enter Earnie&apos;s answer'></textarea>
-		<pre id='bertSetAnswer'></pre>
-		<pre id='bertSendMessagePrefix'>this.send("</pre><pre id='bertSendMessagePostfix'>");</pre>
-		<input type='text' id='msgSender' placeholder='type &amp; hit enter!'/>
+			<div class='stepGuide' id='bertsAnswerGuide'>Bert is now waiting for Ernie to <em>create an answer</em>..</div>		
+			<textarea id='bertsAnswerHolder' class='answerArea' placeholder='This is where Bert should enter Earnie&apos;s answer'></textarea>
+			<pre id='bertSetAnswer'></pre>
+			<pre id='bertSendMessagePrefix'>this.send("</pre><pre id='bertSendMessagePostfix'>");</pre>
+			<input type='text' id='msgSender' placeholder='type &amp; hit enter!'/>
+		</div>
 	</div>
-</div>
 
-<div id='ernieWindow' class='peerWindow'>
-	<div style='position:relative; width:100%; height:100%;'>
-		<div id='ernieThumb'></div>
-		<div class='stepGuide' id='erniesOfferGuide'>Ernie is waiting for Bert <em>create an offer</em>..</div>
-		<pre id='erniesAnswer'></pre>
+	<div id='ernieWindow' class='peerWindow'>
+		<div style='position:relative; width:100%; height:100%;'>
+			<div id='ernieThumb'></div>
+			<div class='stepGuide' id='erniesOfferGuide'>Ernie is waiting for Bert <em>create an offer</em>..</div>
+			<pre id='erniesAnswer'></pre>
 
-		<textarea id='ernieOfferHolder' class='offerArea' placeholder='This is where Earnie should enter Bert&apos;s offer..'></textarea>
+			<textarea id='ernieOfferHolder' class='offerArea' placeholder='This is where Earnie should enter Bert&apos;s offer..'></textarea>
 
-		<div id='erniesAnswerGuide' class='stepGuide'>Once he has an offer he will be able to <button id='bttCreateAnswer' disabled>create an answer</button></div>
+			<div id='erniesAnswerGuide' class='stepGuide'>Once he has an offer he will be able to <button id='bttCreateAnswer' disabled>create an answer</button></div>
 
-		<textarea id='ernieAnswerHolder' readonly='true' class='answerArea' placeholder='Ernie&apos;s Answer will appear here..'></textarea>
+			<textarea id='ernieAnswerHolder' readonly='true' class='answerArea' placeholder='Ernie&apos;s Answer will appear here..'></textarea>
 
-		<div id='msgBubble'>
-			<div class='bubble' id='msgReceiver'></div>
+			<div id='msgBubble'>
+				<div class='bubble' id='msgReceiver'></div>
+			</div>
 		</div>
 	</div>
 </div>

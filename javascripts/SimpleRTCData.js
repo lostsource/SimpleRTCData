@@ -9,6 +9,8 @@ function SimpleRTCData(inServers,inConstraints) {
     var SessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
     var IceCandidate = window.mozRTCIceCandidate || window.webkitRTCIceCandidate || window.RTCIceCandidate;
 
+    var that = this;
+
     function getRTCConnection() {
         var servers = inServers || {'iceServers': [
             {'url': 'stun:stun.l.google.com:19302'}
@@ -52,6 +54,17 @@ function SimpleRTCData(inServers,inConstraints) {
         }
     }
 
+    function emitError(libErr,rtcErr) {
+        if(typeof(that.onError) !== "function") {
+            return;
+        }
+
+        that.onError({
+            message: libErr,
+            rtc: rtcErr
+        });
+    }
+
     function getSDPCopy(detail) {
       // we need to do this separately as Chrome Dev 43 fails to stingify
       return { 
@@ -87,7 +100,6 @@ function SimpleRTCData(inServers,inConstraints) {
         var didCallback = false;
         var iceList = [];
         var offerSDP = null;
-
 
         DataChannel = Connection.createDataChannel(
             'SimpleRTCDataChannel',
@@ -149,7 +161,6 @@ function SimpleRTCData(inServers,inConstraints) {
         }
 
         Connection.addIceCandidate(new IceCandidate(candidate),function(){
-            console.warn(arguments);
             // succesfully added
             addCanditateList(candidateList,callback);
         },function(){
@@ -170,12 +181,10 @@ function SimpleRTCData(inServers,inConstraints) {
         else {
             throw new Error('setAnswer: Argument 1 must be the result of a call to getAnswer');
         }        
-
+        
         var remoteSDP = new SessionDescription(answer.sdp);
         Connection.setRemoteDescription(remoteSDP,function(){
-            addCanditateList(answer.icecandidates,function(candResult){
-                console.warn(candResult);
-            });
+            addCanditateList(answer.icecandidates);
         },function(){
             throw new Error('setAnswer: Failed to setRemoteDescription');
         });
@@ -207,6 +216,7 @@ function SimpleRTCData(inServers,inConstraints) {
         var iceList = [];
         var answerSDP = null;
         var didCallback = false;
+        var fnErrMsg = 'SimpleRTCData.getAnswer Failed: ';
 
         function doCallback(answerSDP,iceList) {
             if(didCallback) {
@@ -234,23 +244,21 @@ function SimpleRTCData(inServers,inConstraints) {
         var remoteDescriptor = new SessionDescription(offer.sdp);
 
         Connection.setRemoteDescription(remoteDescriptor,function(){
+
             Connection.createAnswer(function(inAnswerSDP){
                 answerSDP = inAnswerSDP;
 
                 Connection.setLocalDescription(inAnswerSDP,function(){
                     addCanditateList(offer.icecandidates);
                 },function(){
-                    // failed to set local description
-                    doCallback(null);
+                    emitError(fnErrMsg+"(setLocalDescription)",err);
                 })
                 ;         
             },function(){
-                // failed to createAnswer
-                doCallback(null);
+                emitError(fnErrMsg+"(createAnswer)",err);
             });
-        },function(){
-            // failed to set remote description
-            doCallback(null);
+        },function(err){
+            emitError(fnErrMsg+"(setRemoteDescription)",err);
         });
     };
 
@@ -258,4 +266,8 @@ function SimpleRTCData(inServers,inConstraints) {
         ChannelEventHandlers[evName] = ChannelEventHandlers[evName] || [];
         ChannelEventHandlers[evName].push(evHandler);
     };
+
+    this.onError = function() {
+        // stub replaced by user handler
+    }
 }
