@@ -46,7 +46,8 @@
 			var elmBertsAnswerHolder = document.getElementById('bertsAnswerHolder');
 			var elmBertSetAnswer = document.getElementById('bertSetAnswer');
 
-			var elmBertSendMsg = document.getElementById('bertSendMessage');
+			var elmBertSendMsgPrefix = document.getElementById('bertSendMessagePrefix');
+			var elmBertSendMsgPostfix = document.getElementById('bertSendMessagePostfix');
 			var elmBertMsgNpt = document.getElementById('msgSender');
 
 			var elmMsgReceiver = document.getElementById('msgReceiver');
@@ -92,8 +93,15 @@
 					showCode(function(){
 						BertRTC.onChannelEvent('open',function(){
 							// triggered when we're read to send a message
-							elmBertSendMsg.style.display = "block";
-							elmBertMsgNpt.style.display = "inline";
+							elmBertSendMsgPrefix.style.visibility = "visible";
+							elmBertSendMsgPrefix.style.backgroundColor = 'transparent';
+							elmBertSendMsgPostfix.style.visibility = "visible";
+							elmBertSendMsgPostfix.style.backgroundColor = 'transparent';
+							elmBertMsgNpt.style.left = (elmBertSendMsgPrefix.offsetLeft+elmBertSendMsgPrefix.offsetWidth)+"px";
+							elmBertMsgNpt.style.backgroundColor = 'transparent';
+							elmBertSendMsgPostfix.style.left = (elmBertSendMsgPrefix.offsetLeft+elmBertSendMsgPrefix.offsetWidth+elmBertMsgNpt.offsetWidth)+"px";
+
+							elmBertMsgNpt.style.visibility = "visible";
 							elmBertMsgNpt.focus();
 							BertChan = this;
 						});
@@ -292,6 +300,7 @@
 			height: 90px;
 			opacity:0;
 			transition:opacity 200ms ease-in;
+			resize:none;
 		}
 
 		#ernieAnswerHolder:focus {
@@ -314,7 +323,8 @@
 			width: 410px;
 			height: 90px;
 			opacity:0;
-			transition:opacity 200ms ease-in;			
+			transition:opacity 200ms ease-in;
+			resize:none;
 		}
 
 		#bertSetAnswer {
@@ -334,17 +344,34 @@
 			font-family: monospace;
 			padding: 0;
 			border: 0;
-			left: 106px;
+			left: 40px;
   			width: 119px;
   			border-bottom: 1px solid #cccccc;
-			display: none;
+			visibility:hidden;
+			background-color:orange;
+			transition:background-color 370ms ease-in;
 		}
 
-		#bertSendMessage {
+		#bertSendMessagePrefix {
 			position: absolute;
 			top: 430px;
 			left: 26px;
-			display: none;
+			font-weight: bold;
+			color:rgb(98, 173, 29);
+			visibility: hidden;
+			background-color:orange;
+			transition:background-color 370ms ease-in;
+		}
+
+		#bertSendMessagePostfix {
+			position: absolute;
+			top: 430px;
+			left: 225px;
+			visibility:hidden;
+			font-weight:bold;
+			color:rgb(98, 173, 29);
+			background-color:orange;
+			transition:background-color 370ms ease-in;
 		}
 
 		#msgSender:focus {
@@ -427,7 +454,7 @@
 		<div class='stepGuide' id='bertsAnswerGuide'>Bert is now waiting for Ernie to <em>create an answer</em>..</div>		
 		<textarea id='bertsAnswerHolder' class='answerArea' placeholder='This is where Bert should enter Earnie&apos;s answer'></textarea>
 		<pre id='bertSetAnswer'></pre>
-		<pre id='bertSendMessage'>this.send("                 ");</pre>
+		<pre id='bertSendMessagePrefix'>this.send("</pre><pre id='bertSendMessagePostfix'>");</pre>
 		<input type='text' id='msgSender' placeholder='type &amp; hit enter!'/>
 	</div>
 </div>
