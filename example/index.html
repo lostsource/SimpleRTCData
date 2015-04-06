@@ -37,6 +37,9 @@
 			var BertRTC = null, BertChan = null, ErnieRTC = null;
 			var CreatingOffer = false, CreatingAnswer = false, SettingAnswer = false;
 
+			var elmBertWindow = document.getElementById('bertWindow');
+			var elmErnieWindow = document.getElementById('ernieWindow');
+
 			var elmBertsOffer = document.getElementById('bertsOffer');
 			var elmErniesAnswer = document.getElementById('erniesAnswer');
 			var elmCreateOffer = document.getElementById('bttCreateOffer');
@@ -88,6 +91,9 @@
 
 				showCode(function(){
 					BertRTC = new SimpleRTCData;
+
+					elmBertWindow.classList.add('execWait');
+
 					BertRTC.getOffer(function(bertsOffer) {
 						elmOfferResult.value = bertsOffer;
 						elmOfferResult.style.opacity = 1;
@@ -95,6 +101,7 @@
 						elmBertsAnswerHolder.style.opacity = 1;
 
 						elmCreateOffer.disabled = true;
+						elmBertWindow.classList.remove('execWait');
 					});
 
 				},elmBertsOffer,code.bertsOffer);
@@ -130,7 +137,11 @@
 							elmBertMsgNpt.focus();
 							BertChan = this;
 							elmBertsAnswerHolder.readOnly = true;
+							elmBertWindow.classList.remove('execWait');
 						});
+
+
+						elmBertWindow.classList.add('execWait');
 						BertRTC.setAnswer(answerVal);	
 
 					},elmBertSetAnswer,code.bertSetAnswer);
@@ -167,11 +178,14 @@
 						elmMsgReceiver.appendChild(document.createTextNode(e.data));
 						elmMsgReceiver.style.opacity = 1;
 					});
+
+					elmErnieWindow.classList.add('execWait');
 					ErnieRTC.getAnswer(elmErnieOfferHolder.value.trim(),function(erniesAnswer) {
 						elmErnieAnswerHolder.value = erniesAnswer;
 						elmErnieAnswerHolder.style.opacity = 1;
 						elmCreateAnswer.disabled = true;
 						elmErnieOfferHolder.readOnly = true;
+						elmErnieWindow.classList.remove('execWait');
 					});
 
 				},elmErniesAnswer,code.erniesAnswer);
@@ -213,7 +227,13 @@
 			float:right;
 		}
 
+		.execWait {
+			background-image:url('assets/loader.gif');
+		}
+
 		.peerWindow {
+			background-repeat:no-repeat;
+			background-position: 95% 95%;
 			width: 450px;
 			height: 550px;
 			border: 1px solid rgb(169, 169, 169);
