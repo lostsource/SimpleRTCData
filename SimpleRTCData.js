@@ -11,7 +11,7 @@ function SimpleRTCData(inServers,inConstraints) {
 
     function getRTCConnection() {
         var servers = inServers || {'iceServers': [
-            {'urls': 'stun:stun.l.google.com:19302'}
+            {'url': 'stun:stun.l.google.com:19302'}
         ]};
         var constraints = inConstraints || {
             optional: [
@@ -138,6 +138,25 @@ function SimpleRTCData(inServers,inConstraints) {
         });
     };
 
+    function addCanditateList(candidateList,callback) {
+        callback = callback || function() {};
+
+        var candidate = candidateList.shift();
+        if(!candidate) {
+            // all candidates processed
+            callback({error:0,errmsg:""});
+            return true;
+        }
+
+        Connection.addIceCandidate(new IceCandidate(candidate),function(){
+            // succesfully added
+            addCanditateList(candidateList,callback);
+        },function(){
+            // failed to add candidate
+            console.warn("fail");
+        });
+    }
+
     this.setAnswer = function(answer) {
         if(typeof(answer) === 'string') {
             try {
@@ -153,13 +172,7 @@ function SimpleRTCData(inServers,inConstraints) {
 
         var remoteSDP = new SessionDescription(answer.sdp);
         Connection.setRemoteDescription(remoteSDP,function(){
-
-            // add ice candidates
-            for(var x = 0; x < answer.icecandidates.length; x++) {
-                var rtcCand = new IceCandidate(answer.icecandidates[x]);
-                Connection.addIceCandidate(rtcCand);
-            }
-
+            addCanditateList(answer.icecandidates);
         },function(){
             throw new Error('setAnswer: Failed to setRemoteDescription');
         });
@@ -222,13 +235,7 @@ function SimpleRTCData(inServers,inConstraints) {
                 answerSDP = inAnswerSDP;
 
                 Connection.setLocalDescription(inAnswerSDP,function(){
-
-                    // add ice candidates
-                    for(var x = 0; x < offer.icecandidates.length; x++) {
-                        var rtcCand = new IceCandidate(offer.icecandidates[x]);
-                        Connection.addIceCandidate(rtcCand);             
-                    }
-
+                    addCanditateList(offer.icecandidates);
                 },function(){
                     // failed to set local description
                     doCallback(null);
