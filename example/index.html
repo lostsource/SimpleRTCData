@@ -35,6 +35,7 @@
 
 		window.addEventListener('load',function(){
 			var BertRTC = null, BertChan = null, ErnieRTC = null;
+			var CreatingOffer = false, CreatingAnswer = false, SettingAnswer = false;
 
 			var elmBertsOffer = document.getElementById('bertsOffer');
 			var elmErniesAnswer = document.getElementById('erniesAnswer');
@@ -75,7 +76,14 @@
 				}
 			});
 
+
+
 			elmCreateOffer.addEventListener('click',function(){
+				if(CreatingOffer) {
+					return false;
+				}
+				CreatingOffer = true;
+
 				elmBertsOffer.innerHTML = "";
 
 				showCode(function(){
@@ -93,6 +101,11 @@
 			});
 
 			elmBertsAnswerHolder.addEventListener('input',function(){
+				if(SettingAnswer) {
+					return false;
+				}
+				SettingAnswer = true;
+
 				var answerVal = this.value.trim();
 				// check if it parses as JSON
 				try {
@@ -116,6 +129,7 @@
 							elmBertMsgNpt.style.visibility = "visible";
 							elmBertMsgNpt.focus();
 							BertChan = this;
+							elmBertsAnswerHolder.readOnly = true;
 						});
 						BertRTC.setAnswer(answerVal);	
 
@@ -137,6 +151,12 @@
 
 
 			elmCreateAnswer.addEventListener('click',function(){
+				if(CreatingAnswer) {
+					return false;
+				}
+
+				CreatingAnswer = true;
+
 				elmErniesAnswer.innerHTML = "";
 
 				showCode(function(){
@@ -151,6 +171,7 @@
 						elmErnieAnswerHolder.value = erniesAnswer;
 						elmErnieAnswerHolder.style.opacity = 1;
 						elmCreateAnswer.disabled = true;
+						elmErnieOfferHolder.readOnly = true;
 					});
 
 				},elmErniesAnswer,code.erniesAnswer);
