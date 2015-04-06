@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
 	<title>SimpleRTCData Example</title>
-	<script type='text/javascript' src='javascripts/SimpleRTCData.js'></script>
+	<script type='text/javascript' src='../SimpleRTCData.js'></script>
 	<script type='text/javascript'>
 
 	function showCode (readyCB, container, message, index) {    
@@ -33,23 +35,38 @@
 
 		window.addEventListener('load',function(){
 			var BertRTC = null, BertChan = null, ErnieRTC = null;
+			var CreatingOffer = false, CreatingAnswer = false, SettingAnswer = false;
+
+			var elmBertWindow = document.getElementById('bertWindow');
+			var elmErnieWindow = document.getElementById('ernieWindow');
 
 			var elmBertsOffer = document.getElementById('bertsOffer');
 			var elmErniesAnswer = document.getElementById('erniesAnswer');
 			var elmCreateOffer = document.getElementById('bttCreateOffer');
+
 			var elmCreateAnswer = document.getElementById('bttCreateAnswer');
 			var elmOfferResult = document.getElementById('bertsOfferResult');
 			var elmErnieOfferHolder = document.getElementById('ernieOfferHolder');
+			
 			var elmErnieAnswerHolder = document.getElementById('ernieAnswerHolder');
-
+			
 			var elmBertsAnswerGuide = document.getElementById('bertsAnswerGuide');
 			var elmBertsAnswerHolder = document.getElementById('bertsAnswerHolder');
 			var elmBertSetAnswer = document.getElementById('bertSetAnswer');
 
-			var elmBertSendMsg = document.getElementById('bertSendMessage');
+			var elmBertSendMsgPrefix = document.getElementById('bertSendMessagePrefix');
+			var elmBertSendMsgPostfix = document.getElementById('bertSendMessagePostfix');
 			var elmBertMsgNpt = document.getElementById('msgSender');
 
 			var elmMsgReceiver = document.getElementById('msgReceiver');
+
+			// firefox keeps does not reset button states and textarea contents after refresh
+			elmCreateOffer.disabled = false; 
+			elmErnieOfferHolder.value = "";
+			elmBertsAnswerHolder.value = "";
+			elmErnieAnswerHolder.value = "";
+			elmOfferResult.value = "";
+
 
 			elmBertMsgNpt.addEventListener('keydown',function(e){
 				if(!BertChan) {
@@ -62,24 +79,40 @@
 				}
 			});
 
+
+
 			elmCreateOffer.addEventListener('click',function(){
+				if(CreatingOffer) {
+					return false;
+				}
+				CreatingOffer = true;
+
 				elmBertsOffer.innerHTML = "";
 
 				showCode(function(){
 					BertRTC = new SimpleRTCData;
+
+					elmBertWindow.classList.add('execWait');
+
 					BertRTC.getOffer(function(bertsOffer) {
-						elmOfferResult.innerHTML = bertsOffer;
+						elmOfferResult.value = bertsOffer;
 						elmOfferResult.style.opacity = 1;
 						elmBertsAnswerGuide.style.opacity = 1;
 						elmBertsAnswerHolder.style.opacity = 1;
 
 						elmCreateOffer.disabled = true;
+						elmBertWindow.classList.remove('execWait');
 					});
 
 				},elmBertsOffer,code.bertsOffer);
 			});
 
 			elmBertsAnswerHolder.addEventListener('input',function(){
+				if(SettingAnswer) {
+					return false;
+				}
+				SettingAnswer = true;
+
 				var answerVal = this.value.trim();
 				// check if it parses as JSON
 				try {
@@ -92,11 +125,23 @@
 					showCode(function(){
 						BertRTC.onChannelEvent('open',function(){
 							// triggered when we're read to send a message
-							elmBertSendMsg.style.display = "block";
-							elmBertMsgNpt.style.display = "inline";
+							elmBertSendMsgPrefix.style.visibility = "visible";
+							elmBertSendMsgPrefix.style.backgroundColor = 'transparent';
+							elmBertSendMsgPostfix.style.visibility = "visible";
+							elmBertSendMsgPostfix.style.backgroundColor = 'transparent';
+							elmBertMsgNpt.style.left = (elmBertSendMsgPrefix.offsetLeft+elmBertSendMsgPrefix.offsetWidth)+"px";
+							elmBertMsgNpt.style.backgroundColor = 'transparent';
+							elmBertSendMsgPostfix.style.left = (elmBertSendMsgPrefix.offsetLeft+elmBertSendMsgPrefix.offsetWidth+elmBertMsgNpt.offsetWidth)+"px";
+
+							elmBertMsgNpt.style.visibility = "visible";
 							elmBertMsgNpt.focus();
 							BertChan = this;
+							elmBertsAnswerHolder.readOnly = true;
+							elmBertWindow.classList.remove('execWait');
 						});
+
+
+						elmBertWindow.classList.add('execWait');
 						BertRTC.setAnswer(answerVal);	
 
 					},elmBertSetAnswer,code.bertSetAnswer);
@@ -117,6 +162,12 @@
 
 
 			elmCreateAnswer.addEventListener('click',function(){
+				if(CreatingAnswer) {
+					return false;
+				}
+
+				CreatingAnswer = true;
+
 				elmErniesAnswer.innerHTML = "";
 
 				showCode(function(){
@@ -127,10 +178,14 @@
 						elmMsgReceiver.appendChild(document.createTextNode(e.data));
 						elmMsgReceiver.style.opacity = 1;
 					});
+
+					elmErnieWindow.classList.add('execWait');
 					ErnieRTC.getAnswer(elmErnieOfferHolder.value.trim(),function(erniesAnswer) {
-						elmErnieAnswerHolder.innerHTML = erniesAnswer;
+						elmErnieAnswerHolder.value = erniesAnswer;
 						elmErnieAnswerHolder.style.opacity = 1;
 						elmCreateAnswer.disabled = true;
+						elmErnieOfferHolder.readOnly = true;
+						elmErnieWindow.classList.remove('execWait');
 					});
 
 				},elmErniesAnswer,code.erniesAnswer);
@@ -172,7 +227,13 @@
 			float:right;
 		}
 
+		.execWait {
+			background-image:url('assets/loader.gif');
+		}
+
 		.peerWindow {
+			background-repeat:no-repeat;
+			background-position: 95% 95%;
 			width: 450px;
 			height: 550px;
 			border: 1px solid rgb(169, 169, 169);
@@ -292,6 +353,7 @@
 			height: 90px;
 			opacity:0;
 			transition:opacity 200ms ease-in;
+			resize:none;
 		}
 
 		#ernieAnswerHolder:focus {
@@ -314,7 +376,8 @@
 			width: 410px;
 			height: 90px;
 			opacity:0;
-			transition:opacity 200ms ease-in;			
+			transition:opacity 200ms ease-in;
+			resize:none;
 		}
 
 		#bertSetAnswer {
@@ -334,17 +397,34 @@
 			font-family: monospace;
 			padding: 0;
 			border: 0;
-			left: 106px;
+			left: 40px;
   			width: 119px;
   			border-bottom: 1px solid #cccccc;
-			display: none;
+			visibility:hidden;
+			background-color:orange;
+			transition:background-color 370ms ease-in;
 		}
 
-		#bertSendMessage {
+		#bertSendMessagePrefix {
 			position: absolute;
 			top: 430px;
 			left: 26px;
-			display: none;
+			font-weight: bold;
+			color:rgb(98, 173, 29);
+			visibility: hidden;
+			background-color:orange;
+			transition:background-color 370ms ease-in;
+		}
+
+		#bertSendMessagePostfix {
+			position: absolute;
+			top: 430px;
+			left: 225px;
+			visibility:hidden;
+			font-weight:bold;
+			color:rgb(98, 173, 29);
+			background-color:orange;
+			transition:background-color 370ms ease-in;
 		}
 
 		#msgSender:focus {
@@ -427,7 +507,7 @@
 		<div class='stepGuide' id='bertsAnswerGuide'>Bert is now waiting for Ernie to <em>create an answer</em>..</div>		
 		<textarea id='bertsAnswerHolder' class='answerArea' placeholder='This is where Bert should enter Earnie&apos;s answer'></textarea>
 		<pre id='bertSetAnswer'></pre>
-		<pre id='bertSendMessage'>this.send("                 ");</pre>
+		<pre id='bertSendMessagePrefix'>this.send("</pre><pre id='bertSendMessagePostfix'>");</pre>
 		<input type='text' id='msgSender' placeholder='type &amp; hit enter!'/>
 	</div>
 </div>
