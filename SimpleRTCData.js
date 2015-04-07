@@ -118,6 +118,10 @@ function SimpleRTCData(inServers,inConstraints) {
         regChannelEvents(e.channel);
     };
 
+    this.getConnection = function() {
+        return Connection;
+    }
+
     this.getOffer = function(callback) {
         if(inMode !== null) {
             throw new Error('getOffer cannot be called with getAnswer');
