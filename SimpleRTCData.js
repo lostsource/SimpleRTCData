@@ -9,6 +9,8 @@ function SimpleRTCData(inServers,inConstraints) {
     var SessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription;
     var IceCandidate = window.mozRTCIceCandidate || window.webkitRTCIceCandidate || window.RTCIceCandidate;
 
+    var DataChannel = null;
+
     var that = this;
 
     function getRTCConnection() {
@@ -26,31 +28,50 @@ function SimpleRTCData(inServers,inConstraints) {
         return new PeerConnection(servers,constraints);
     }
 
-    var ChannelEventHandlers = {};
+    var ChannelEventHandlers = {}, ConnEventHandlers = {};
     var Connection = getRTCConnection();
-    var DataChannel = null;
 
-    function forwardEventToHandler(evName,context,event) {
-        if(typeof(ChannelEventHandlers[evName]) === 'undefined') {
+    // list of events to be forwarded to SimpleRTCData.onConnectionEvent handler
+    var connEvList = ['addstream','datachannel','icecandidate','iceconnectionstatechange','identityresult','idpassertionerror','idpvalidationerror','negotiationneeded','peeridentity','remotestream','signalingstatechange'];
+    connEvList.forEach(function(evName){
+        Connection.addEventListener(evName,function(e){
+            forwardConnEvent.apply(this,[e]);
+        });
+    });
+
+    function forwardConnEvent(event) {
+        if(typeof(ConnEventHandlers[event.type]) === 'undefined') {
             // no event handlers
             return true;
         }
 
-        for(var x = 0; x < ChannelEventHandlers[evName].length; x++) {
-            ChannelEventHandlers[evName][x].apply(context,[event]);
+        for(var x = 0; x < ConnEventHandlers[event.type].length; x++) {
+            ConnEventHandlers[event.type][x].apply(this,[event]);
         }
     }
 
-    function registerChannelEvent(channel,evName) {
+
+    function forwardChannelEvent(event) {
+        if(typeof(ChannelEventHandlers[event.type]) === 'undefined') {
+            // no event handlers
+            return true;
+        }
+
+        for(var x = 0; x < ChannelEventHandlers[event.type].length; x++) {
+            ChannelEventHandlers[event.type][x].apply(this,[event]);
+        }
+    }
+
+    function regChannelEvent(channel,evName) {
         channel.addEventListener(evName,function(e){
-            forwardEventToHandler(evName,this,e);
+            forwardChannelEvent.apply(this,[e]);
         });
     }
 
-    function registerChannelEvents(channel) {
+    function regChannelEvents(channel) {
         var handledEvents = ['open','close','error','message'];
         for(var x = 0; x < handledEvents.length; x++) {
-            registerChannelEvent(channel,handledEvents[x]);
+            regChannelEvent(channel,handledEvents[x]);
         }
     }
 
@@ -82,7 +103,7 @@ function SimpleRTCData(inServers,inConstraints) {
     }
 
     Connection.ondatachannel = function(e) {
-        registerChannelEvents(e.channel);
+        regChannelEvents(e.channel);
     };
 
     this.getOffer = function(callback) {
@@ -106,7 +127,7 @@ function SimpleRTCData(inServers,inConstraints) {
             {reliable: true, ordered:true}
         );
 
-        registerChannelEvents(DataChannel);
+        regChannelEvents(DataChannel);
 
         function doCallback(offerSDP,iceList) {
             if(didCallback) {
@@ -266,6 +287,11 @@ function SimpleRTCData(inServers,inConstraints) {
         ChannelEventHandlers[evName] = ChannelEventHandlers[evName] || [];
         ChannelEventHandlers[evName].push(evHandler);
     };
+
+    this.onConnectionEvent = function(evName,evHandler) {
+        ConnEventHandlers[evName] = ConnEventHandlers[evName] || [];
+        ConnEventHandlers[evName].push(evHandler);
+    }
 
     this.onError = function() {
         // stub replaced by user handler
