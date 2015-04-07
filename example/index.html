@@ -91,6 +91,20 @@
 
 				showCode(function(){
 					BertRTC = new SimpleRTCData;
+					var bertConn = BertRTC.getConnection();
+
+					BertRTC.onConnectionEvent('*',function(e){
+						console.log("%cBert:  onConnectionEvent ["+e.type+"]","color:blue",
+							"iceConnectionState="+bertConn.iceConnectionState,
+							"iceGatheringState="+bertConn.iceGatheringState,
+							"signalingState="+bertConn.signalingState
+						);
+					});					
+
+					BertRTC.onChannelEvent('*',function(e){
+						console.log("%cBert:  onChannelEvent ["+e.type+"]","color:blue");
+					});					
+
 
 					elmBertWindow.classList.add('execWait');
 					elmBertWindow.classList.add('waitingForAnswer');
@@ -177,6 +191,20 @@
 				showCode(function(){
 
 					ErnieRTC = new SimpleRTCData;
+					var ErnieConn = ErnieRTC.getConnection();
+					ErnieRTC.onConnectionEvent('*',function(e){
+						console.log("%cErnie: onConnectionEvent ["+e.type+"]","color:maroon",
+							"iceConnectionState="+ErnieConn.iceConnectionState,
+							"iceGatheringState="+ErnieConn.iceGatheringState,
+							"signalingState="+ErnieConn.signalingState
+						);
+					});					
+
+					ErnieRTC.onChannelEvent('*',function(e){
+						console.log("%cErnie: onChannelEvent ["+e.type+"]","color:maroon");
+					});					
+
+
 					ErnieRTC.onError = function(error) {
 						console.warn(error);
 					}
@@ -529,7 +557,7 @@
 
 </head>
 <body>
-<h3 style='text-align:center;'>SimpleRTCData is available on <a href='https://github.com/lostsource/SimpleRTCData'>Github</a></h3>
+<h3 style='text-align:center; margin-bottom:0;'>SimpleRTCData is available on <a href='https://github.com/lostsource/SimpleRTCData'>Github</a></h3>
 <div id='peerWindowContainer'>
 	<div id='bertWindow' class='peerWindow'>
 		<div style='position:relative; width:100%; height:100%;'>
