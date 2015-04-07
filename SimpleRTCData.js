@@ -31,9 +31,12 @@ function SimpleRTCData(inServers,inConstraints) {
     var ChannelEventHandlers = {}, ConnEventHandlers = {};
     var Connection = getRTCConnection();
 
-    // list of events to be forwarded to SimpleRTCData.onConnectionEvent handler
-    var connEvList = ['addstream','datachannel','icecandidate','iceconnectionstatechange','identityresult','idpassertionerror','idpvalidationerror','negotiationneeded','peeridentity','remotestream','signalingstatechange'];
-    connEvList.forEach(function(evName){
+    // list of events to be forwarded to SimpleRTCData.onChannelEvent handlers
+    var ChanEvList = ['open','close','error','message'];
+
+    // list of events to be forwarded to SimpleRTCData.onConnectionEvent handlers
+    var ConnEvList = ['addstream','datachannel','icecandidate','iceconnectionstatechange','identityresult','idpassertionerror','idpvalidationerror','negotiationneeded','peeridentity','remotestream','signalingstatechange'];
+    ConnEvList.forEach(function(evName){
         Connection.addEventListener(evName,function(e){
             forwardConnEvent.apply(this,[e]);
         });
@@ -69,10 +72,19 @@ function SimpleRTCData(inServers,inConstraints) {
     }
 
     function regChannelEvents(channel) {
-        var handledEvents = ['open','close','error','message'];
-        for(var x = 0; x < handledEvents.length; x++) {
-            regChannelEvent(channel,handledEvents[x]);
+        for(var x = 0; x < ChanEvList.length; x++) {
+            regChannelEvent(channel,ChanEvList[x]);
         }
+    }
+
+    function addChanEvHandler(evName,evHandler) {
+        ChannelEventHandlers[evName] = ChannelEventHandlers[evName] || [];
+        ChannelEventHandlers[evName].push(evHandler);
+    }
+
+    function addConnEvHandler(evName,evHandler) {
+        ConnEventHandlers[evName] = ConnEventHandlers[evName] || [];
+        ConnEventHandlers[evName].push(evHandler);
     }
 
     function emitError(libErr,rtcErr) {
@@ -284,13 +296,27 @@ function SimpleRTCData(inServers,inConstraints) {
     };
 
     this.onChannelEvent = function(evName,evHandler) {
-        ChannelEventHandlers[evName] = ChannelEventHandlers[evName] || [];
-        ChannelEventHandlers[evName].push(evHandler);
+        if(evName !== "*") {
+            addChanEvHandler(evName,evHandler);
+            return;
+        }
+
+        // register all channel events if evName is '*'
+        ChanEvList.forEach(function(evName){
+            addChanEvHandler(evName,evHandler);
+        });
     };
 
     this.onConnectionEvent = function(evName,evHandler) {
-        ConnEventHandlers[evName] = ConnEventHandlers[evName] || [];
-        ConnEventHandlers[evName].push(evHandler);
+        if(evName !== "*") {
+            addConnEvHandler(evName,evHandler);
+            return;
+        }
+
+        // register all channel events if evName is '*'
+        ConnEvList.forEach(function(evName){
+            addConnEvHandler(evName,evHandler);
+        });
     }
 
     this.onError = function() {
