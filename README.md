@@ -2,9 +2,9 @@
 
 SimpleRTCData is a tiny JavaScript library which can be used to establish an RTCDataChannel between two peers. It does not handle the signalling stage so you will need to implement your own mechanism for that.
 
-Note: Visualization of the following example is available on this [GitHub Page](http://lostsource.github.io/SimpleRTCData/)
-
 ### Basic Usage
+
+*Note: Visualization of the following example is available on this [GitHub Page](http://lostsource.github.io/SimpleRTCData/)*
 
 Assume we have two peers Bert and Ernie in which Bert is the initiator. Bert first needs to make an 'offer' to Ernie by calling the `getOffer` method:
 
@@ -37,3 +37,28 @@ At last send `erniesAnswer` to Bert so he can use it to call his `setAnswer` met
     });
      
     BertRTC.setAnswer(erniesAnswer);
+
+### Methods
+
+#### getAnswer
+*SimpleRTCData.getAnswer(string offer, function callback)*
+
+#### getConnection
+*SimpleRTCData.getConnection(void)*
+
+#### getOffer
+*SimpleRTCData.getOffer(function callback)*
+
+#### setAnswer
+*SimpleRTCData.setAnswer(string answer)*
+
+### Events
+
+#### onChannelEvent
+*SimpleRTCData.onChannelEvent(string eventType, function callback)*
+
+#### onConnectionEvent
+*SimpleRTCData.onConnectionEvent(string eventType, function callback)*
+
+#### onError
+*SimpleRTCData.onError(function callback)*
