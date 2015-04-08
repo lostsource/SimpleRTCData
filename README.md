@@ -50,6 +50,12 @@ The *joiner* should call this method after receiving an offer from the *initiato
 
 Returns a reference to the session's [RTCPeerConnection](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection) instance
 
+### getDataChannel
+*SimpleRTCData.getDataChannel(void)*
+
+Returns a reference to the session's [RTCDataChannel](https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel) instance
+
+
 ### getOffer
 *SimpleRTCData.getOffer(Function callback)*
 
@@ -64,6 +70,10 @@ The *initiator* must call this method after receiving an answer from the *joiner
 
 ### onChannelEvent
 *SimpleRTCData.onChannelEvent(String eventType, Function callback)*
+
+This handler forwards events of type `eventType` from the [RTCDataChannel](https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel) instance to the callback specified in the second argument. 
+
+The `eventType` parameter also accepts the special '*' value which forwards all known `RTCDataChannel` events to a single handler.
 
 ### onConnectionEvent
 *SimpleRTCData.onConnectionEvent(String eventType, Function callback)*
@@ -81,7 +91,4 @@ Is identical to:
     var connection = RTC.getConnection(); // returns the standard RTCPeerConnection
     connection.onicecandidate = myCandidateHandler;
 
-The `eventType` parameter also accepts the special '*' value which forwards all known RTCPeerConnection events to a single handler.
-
-### onError
-*SimpleRTCData.onError(Function callback)*
+The `eventType` parameter also accepts the special '*' value which forwards all known `RTCPeerConnection` events to a single handler.
