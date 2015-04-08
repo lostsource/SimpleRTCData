@@ -1,6 +1,6 @@
 # SimpleRTCData
 
-SimpleRTCData is a tiny JavaScript library which can be used to establish an RTCDataChannel between two peers. It does not handle the signalling stage required during the channel setup stage so you will need to implement your own mechanism for that.
+SimpleRTCData is a tiny JavaScript library which can be used to establish an RTCDataChannel between two peers. It does not handle relaying of messages during connection setup so a separate signalling mechanism is required.
 
 ## How to use
 
@@ -63,10 +63,25 @@ The *initiator* must call this method after receiving an answer from the *joiner
 ## Events
 
 ### onChannelEvent
-*SimpleRTCData.onChannelEvent(Function callback)*
+*SimpleRTCData.onChannelEvent(String eventType, Function callback)*
 
 ### onConnectionEvent
-*SimpleRTCData.onConnectionEvent(Function callback)*
+*SimpleRTCData.onConnectionEvent(String eventType, Function callback)*
+
+This handler forwards events of type `eventType` from the [RTCPeerConnection](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection) instance to the callback specified in the second argument. 
+
+For Example:
+
+    var RTC = new SimpleRTCData;
+    RTC.onConnectionEvent('icecandidate',myCandidateHandler);
+
+Is identical to:
+
+    var RTC = new SimpleRTCData;
+    var connection = RTC.getConnection(); // returns the standard RTCPeerConnection
+    connection.onicecandidate = myCandidateHandler;
+
+The `eventType` parameter also accepts the special '*' value which forwards all known RTCPeerConnection events to a single handler.
 
 ### onError
 *SimpleRTCData.onError(Function callback)*
