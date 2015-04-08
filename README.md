@@ -1,10 +1,10 @@
-## SimpleRTCData
+# SimpleRTCData
 
-SimpleRTCData is a tiny JavaScript library which can be used to establish an RTCDataChannel between two peers. It does not handle the signalling stage so you will need to implement your own mechanism for that.
+SimpleRTCData is a tiny JavaScript library which can be used to establish an RTCDataChannel between two peers. It does not handle the signalling stage required during the channel setup stage so you will need to implement your own mechanism for that.
 
-### Basic Usage
+## How to use
 
-*Note: Visualization of the following example is available on this [GitHub Page](http://lostsource.github.io/SimpleRTCData/)*
+*Note: Visualization of the following example is available on this project's [GitHub Page](http://lostsource.github.io/SimpleRTCData/)*
 
 Assume we have two peers Bert and Ernie in which Bert is the initiator. Bert first needs to make an 'offer' to Ernie by calling the `getOffer` method:
 
@@ -38,27 +38,35 @@ At last send `erniesAnswer` to Bert so he can use it to call his `setAnswer` met
      
     BertRTC.setAnswer(erniesAnswer);
 
-### Methods
+## Methods
 
-#### getAnswer
-*SimpleRTCData.getAnswer(string offer, function callback)*
+### getAnswer
+*SimpleRTCData.getAnswer(String offer, Function callback)*
 
-#### getConnection
+The *joiner* should call this method after receiving an offer from the *initiator*. The offer should be passed as the first argument. The callback function get one argument `(String answer)`
+
+### getConnection
 *SimpleRTCData.getConnection(void)*
 
-#### getOffer
-*SimpleRTCData.getOffer(function callback)*
+Returns a reference to the session's [RTCPeerConnection](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection) instance
 
-#### setAnswer
-*SimpleRTCData.setAnswer(string answer)*
+### getOffer
+*SimpleRTCData.getOffer(Function callback)*
 
-### Events
+The *initiator* must call this method to retrieve the offer metadata which should be used by the *joiner* as the first argument for the `getAnswer` method. The callback function gets one argument `(String offer)`.
 
-#### onChannelEvent
-*SimpleRTCData.onChannelEvent(string eventType, function callback)*
+### setAnswer
+*SimpleRTCData.setAnswer(String answer)*
 
-#### onConnectionEvent
-*SimpleRTCData.onConnectionEvent(string eventType, function callback)*
+The *initiator* must call this method after receiving an answer from the *joiner*. The answer should be passed as the first argument.
 
-#### onError
-*SimpleRTCData.onError(function callback)*
+## Events
+
+### onChannelEvent
+*SimpleRTCData.onChannelEvent(Function callback)*
+
+### onConnectionEvent
+*SimpleRTCData.onConnectionEvent(Function callback)*
+
+### onError
+*SimpleRTCData.onError(Function callback)*
