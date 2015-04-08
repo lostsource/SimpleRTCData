@@ -114,12 +114,17 @@ function SimpleRTCData(inServers,inConstraints) {
       };
     }
 
-    Connection.ondatachannel = function(e) {
+    Connection.addEventListener('datachannel', function(e) {
+        DataChannel = e.channel;
         regChannelEvents(e.channel);
-    };
+    });
 
     this.getConnection = function() {
         return Connection;
+    }
+
+    this.getDataChannel = function() {
+        return DataChannel;
     }
 
     this.getOffer = function(callback) {
