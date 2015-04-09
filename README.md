@@ -6,6 +6,10 @@ SimpleRTCData is a tiny JavaScript library which can be used to establish an RTC
 
 *Note: Visualization of the following example is available on this project's [GitHub Page](http://lostsource.github.io/SimpleRTCData/)*
 
+Start by including the library in your markup,
+
+    <script type='text/javascript' src='SimpleRTCData.js></script>
+
 Assume we have two peers Bert and Ernie in which Bert is the initiator. Bert first needs to make an 'offer' to Ernie by calling the `getOffer` method:
 
     var BertRTC = new SimpleRTCData;
