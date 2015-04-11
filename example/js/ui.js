@@ -80,10 +80,18 @@ window.addEventListener('load',function(){
 
 		showCode(function(){
 			BertRTC = new SimpleRTCData;
+			BertRTC.on("connect", function(e) {
+				console.log("%cBert:  on('connect')", "color:blue");
+			});
+
+			BertRTC.on("disconnect", function(e) {
+				console.log("%cBert:  on('disconnect')", "color:blue");
+			});
+
 			var bertConn = BertRTC.getConnection();
 
 			BertRTC.onConnectionEvent('*',function(e){
-				console.log("%cBert:  onConnectionEvent ["+e.type+"]","color:blue",
+				console.log("%cBert:  onConnectionEvent ["+e.type+"]", "color:blue",
 					"iceConnectionState="+bertConn.iceConnectionState,
 					"iceGatheringState="+bertConn.iceGatheringState,
 					"signalingState="+bertConn.signalingState
@@ -91,7 +99,7 @@ window.addEventListener('load',function(){
 			});					
 
 			BertRTC.onChannelEvent('*',function(e){
-				console.log("%cBert:  onChannelEvent ["+e.type+"]","color:blue");
+				console.log("%cBert:  onChannelEvent ["+e.type+"]", "color:blue");
 			});					
 
 
@@ -147,7 +155,11 @@ window.addEventListener('load',function(){
 
 
 				elmBertWindow.classList.add('execWait');
-				BertRTC.setAnswer(answerVal);	
+				BertRTC.setAnswer(answerVal, function(detail) {
+					if(detail.error) {
+						console.warn(detail.error);
+					}
+				});	
 
 			},elmBertSetAnswer,code.bertSetAnswer);
 			
@@ -180,6 +192,14 @@ window.addEventListener('load',function(){
 		showCode(function(){
 
 			ErnieRTC = new SimpleRTCData;
+			ErnieRTC.on("connect", function(e) {
+				console.log("%cErnie: on('connect')", "color:maroon");
+			});
+
+			ErnieRTC.on("disconnect", function(e) {
+				console.log("%cErnie: on('disconnect')", "color:maroon");
+			});
+
 			var ErnieConn = ErnieRTC.getConnection();
 			ErnieRTC.onConnectionEvent('*',function(e){
 				console.log("%cErnie: onConnectionEvent ["+e.type+"]","color:maroon",

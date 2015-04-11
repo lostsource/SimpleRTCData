@@ -5,6 +5,9 @@ function SimpleRTCData(inServers, inConstraints) {
   // set to 'offer' or 'answer' depending on call to getOffer or getAnswer
   var inMode = null;
 
+  // set to true when iceConnectionState is completed/connected
+  var Connected = false; 
+
   var PeerConnection = window.RTCPeerConnection ||
                        window.mozRTCPeerConnection ||
                        window.webkitRTCPeerConnection;
@@ -36,8 +39,26 @@ function SimpleRTCData(inServers, inConstraints) {
     return new PeerConnection(servers, constraints);
   }
 
-  var ChannelEventHandlers = {}, ConnEventHandlers = {};
+  var ChannelEventHandlers = {}, ConnEventHandlers = {}, LibEventHandlers = {};
   var Connection = getRTCConnection();
+
+  Connection.addEventListener('iceconnectionstatechange', function() {
+    switch (Connection.iceConnectionState) {
+      case 'disconnected':
+        emitEvent('disconnect');
+        break;
+      case 'completed':
+      case 'connected':
+        if (!Connected) {
+          Connected = true;
+          emitEvent('connect');
+        }
+        break;
+    }
+  });
+
+  // list of events to be forwarded to SimpleRTCData.on handlers
+  var LibEvList = ['error', 'connect', 'disconnect'];
 
   // list of events to be forwarded to SimpleRTCData.onChannelEvent handlers
   var ChanEvList = ['open', 'close', 'error', 'message'];
@@ -54,6 +75,17 @@ function SimpleRTCData(inServers, inConstraints) {
       forwardConnEvent.apply(this, [e]);
     });
   });
+
+  function emitEvent(evName, evArgs) {
+    if (typeof(LibEventHandlers[evName]) === 'undefined') {
+      // no event handlers
+      return true;
+    }
+
+    for (var x = 0; x < LibEventHandlers[evName].length; x++) {
+      LibEventHandlers[evName][x].apply(that, evArgs);
+    }
+  }
 
   function forwardConnEvent(event) {
     if (typeof(ConnEventHandlers[event.type]) === 'undefined') {
@@ -98,6 +130,11 @@ function SimpleRTCData(inServers, inConstraints) {
   function addConnEvHandler(evName, evHandler) {
     ConnEventHandlers[evName] = ConnEventHandlers[evName] || [];
     ConnEventHandlers[evName].push(evHandler);
+  }
+
+  function addLibEvHandler(evName, evHandler) {
+    LibEventHandlers[evName] = LibEventHandlers[evName] || [];
+    LibEventHandlers[evName].push(evHandler);
   }
 
   function emitError(libErr, rtcErr) {
@@ -227,7 +264,9 @@ function SimpleRTCData(inServers, inConstraints) {
     });
   }
 
-  this.setAnswer = function(answer) {
+  this.setAnswer = function(answer, callback) {
+    callback = callback || function() {};
+
     if (typeof(answer) === 'string') {
       try {
         answer = JSON.parse(answer);
@@ -239,6 +278,39 @@ function SimpleRTCData(inServers, inConstraints) {
     else {
       throw new Error('setAnswer: Argument 1 must be the result of a call to getAnswer');
     }
+
+    var didCallback = false;
+
+    function doCallback(err) {
+      err = err || null;
+      if (didCallback) {
+        return true;
+      }
+
+      didCallback = true;
+
+      Connection.removeEventListener('iceconnectionstatechange', checkAnswerReady);
+
+      callback({
+        error: err
+      });
+    }
+
+    function checkAnswerReady() {
+
+      switch (Connection.iceConnectionState) {
+        case 'completed':
+        case 'connected':
+          doCallback();
+          break;
+
+        case 'failed':
+          doCallback('Failed to setAnswer');
+          break;
+      }
+    }
+
+    Connection.addEventListener('iceconnectionstatechange', checkAnswerReady);
 
     var remoteSDP = new SessionDescription(answer.sdp);
     Connection.setRemoteDescription(remoteSDP, function() {
@@ -290,14 +362,14 @@ function SimpleRTCData(inServers, inConstraints) {
       }));
     }
 
-    Connection.onicecandidate = function(e) {
+    Connection.addEventListener('icecandidate', function(e) {
       if (e.candidate) {
         iceList.push(getCandidateCopy(e.candidate));
       }
       else {
         doCallback(answerSDP, iceList);
       }
-    };
+    });
 
     var remoteDescriptor = new SessionDescription(offer.sdp);
 
@@ -346,7 +418,15 @@ function SimpleRTCData(inServers, inConstraints) {
     });
   };
 
-  this.onError = function() {
-    // stub replaced by user handler
+  this.on = function(evName, evHandler) {
+    if (evName === '*') {
+      throw new Error('SimpleRTCData.on does not accept wildcard for the eventName argument');
+    }
+
+    if(LibEvList.indexOf(evName) === -1) {
+      throw new Error('SimpleRTCData.on: Unknown eventName (" + evName + ")');
+    }
+
+    addLibEvHandler(evName, evHandler);
   };
 }
