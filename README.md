@@ -2,9 +2,15 @@
 
 SimpleRTCData is a tiny JavaScript library which can be used to establish an RTCDataChannel between two peers. It does not handle relaying of messages during connection setup so a separate signalling mechanism is required.
 
-## How to use
+## How it works
 
-*Note: Visualization of the following example is available on this project's [GitHub Page](http://lostsource.github.io/SimpleRTCData/)*
+1. Peer A calls `getOffer` and sends the offer to Peer B
+2. Peer B calls `getAnswer` and sends the answer to Peer A
+3. Peer A calls `setAnswer` using the answer received from Peer B
+
+*You may want to go through these steps using this [online example](http://lostsource.github.io/SimpleRTCData/)*
+
+## How to use
 
 Start by including the library in your markup,
 
