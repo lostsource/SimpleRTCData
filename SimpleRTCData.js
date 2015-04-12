@@ -45,7 +45,10 @@ function SimpleRTCData(inServers, inConstraints) {
   Connection.addEventListener('iceconnectionstatechange', function() {
     switch (Connection.iceConnectionState) {
       case 'disconnected':
-        emitEvent('disconnect');
+        if (Connected) {
+          Connected = false;
+          emitEvent('disconnect');
+        }
         break;
       case 'completed':
       case 'connected':
@@ -58,7 +61,7 @@ function SimpleRTCData(inServers, inConstraints) {
   });
 
   // list of events to be forwarded to SimpleRTCData.on handlers
-  var LibEvList = ['error', 'connect', 'disconnect'];
+  var LibEvList = ['data', 'error', 'connect', 'disconnect'];
 
   // list of events to be forwarded to SimpleRTCData.onChannelEvent handlers
   var ChanEvList = ['open', 'close', 'error', 'message'];
@@ -117,6 +120,17 @@ function SimpleRTCData(inServers, inConstraints) {
   }
 
   function regChannelEvents(channel) {
+    channel.addEventListener('close', function() {
+      if (Connected) {
+        Connected = false;
+        emitEvent('disconnect');
+      }
+    });
+
+    channel.addEventListener('message', function(e) {
+      emitEvent('data', [e.data]);
+    });
+
     for (var x = 0; x < ChanEvList.length; x++) {
       regChannelEvent(channel, ChanEvList[x]);
     }
@@ -175,6 +189,14 @@ function SimpleRTCData(inServers, inConstraints) {
 
   this.getDataChannel = function() {
     return DataChannel;
+  };
+
+  this.send = function(data) {
+    if (!DataChannel) {
+      return false;
+    }
+
+    DataChannel.send(data);
   };
 
   this.getOffer = function(callback) {
@@ -423,8 +445,8 @@ function SimpleRTCData(inServers, inConstraints) {
       throw new Error('SimpleRTCData.on does not accept wildcard for the eventName argument');
     }
 
-    if(LibEvList.indexOf(evName) === -1) {
-      throw new Error('SimpleRTCData.on: Unknown eventName (" + evName + ")');
+    if (LibEvList.indexOf(evName) === -1) {
+      throw new Error('SimpleRTCData.on: Unknown eventName (' + evName + ')');
     }
 
     addLibEvHandler(evName, evHandler);
