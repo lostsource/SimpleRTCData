@@ -21,10 +21,10 @@
 
 			<pre id='bertsOffer'></pre>
 
-			<textarea id='bertsOfferResult' class='offerArea' readonly='true' placeholder='Bert&apos;s offer will appear here..'></textarea>
+			<textarea spellcheck="false" id='bertsOfferResult' class='offerArea' readonly='true' placeholder='Bert&apos;s offer will appear here..'></textarea>
 
 			<div class='stepGuide' id='bertsAnswerGuide'>Bert is now waiting for Ernie to <em>create an answer</em>..</div>		
-			<textarea id='bertsAnswerHolder' class='answerArea' placeholder='This is where Bert should enter Earnie&apos;s answer'></textarea>
+			<textarea spellcheck="false" id='bertsAnswerHolder' class='answerArea' placeholder='This is where Bert should enter Earnie&apos;s answer'></textarea>
 			<pre id='bertSetAnswer'></pre>
 			<pre id='bertSendMessagePrefix'>BertRTC.send("</pre><pre id='bertSendMessagePostfix'>");</pre>
 			<input type='text' id='msgSender' placeholder='type &amp; hit enter!'/>
@@ -47,11 +47,11 @@
 			<div class='stepGuide' id='erniesOfferGuide'>Ernie is waiting for Bert <em>create an offer</em>..</div>
 			<pre id='erniesAnswer'></pre>
 
-			<textarea id='ernieOfferHolder' class='offerArea' placeholder='This is where Earnie should enter Bert&apos;s offer..'></textarea>
+			<textarea spellcheck="false" id='ernieOfferHolder' class='offerArea' placeholder='This is where Earnie should enter Bert&apos;s offer..'></textarea>
 
 			<div id='erniesAnswerGuide' class='stepGuide'>Once he has an offer he will be able to <button id='bttCreateAnswer' disabled>create an answer</button></div>
 
-			<textarea id='ernieAnswerHolder' readonly='true' class='answerArea' placeholder='Ernie&apos;s Answer will appear here..'></textarea>
+			<textarea spellcheck="false" id='ernieAnswerHolder' readonly='true' class='answerArea' placeholder='Ernie&apos;s Answer will appear here..'></textarea>
 
 			<div id='msgBubble'>
 				<div class='bubble' id='msgReceiver'></div>

@@ -21,6 +21,13 @@ window.addEventListener('load', function() {
 		}
 	}
 
+	function dimTextAreas() {
+		var tareas = document.querySelectorAll('textarea');
+		for(var x = 0; x < tareas.length; x++) {
+			tareas[x].style.color = '#aaaaaa';
+		}
+	}
+
 	var code = {
 		bertsOffer: "var BertRTC = new SimpleRTCData;\nBertRTC.getOffer(function(offer) {\n  // 'offer' has to be sent to Ernie\n});",
 		erniesAnswer: "var ErnieRTC = new SimpleRTCData;\n\nErnieRTC.on('data',function(data) {\n  // get ready for messages from Bert \n  console.log(data);\n});\n\nErnieRTC.getAnswer(offer,function(answer) {\n  // 'answer' has to be sent to Bert\n});",
@@ -99,6 +106,7 @@ window.addEventListener('load', function() {
 			BertRTC = new SimpleRTCData();
 			BertRTC.on('connect', function() {
 				console.log("%cBert:  on('connect')", "color:blue");
+				dimTextAreas();
 			});
 
 			BertRTC.on('disconnect', function() {
@@ -196,6 +204,8 @@ window.addEventListener('load', function() {
 			elmBertWindow.classList.add('settingAnswer');
 			showCode(function(){
 				BertRTC.on('connect',function(){
+					dimTextAreas();
+
 					// triggered when we're read to send a message
 					elmBertSendMsgPrefix.style.visibility = "visible";
 					elmBertSendMsgPrefix.style.backgroundColor = 'transparent';

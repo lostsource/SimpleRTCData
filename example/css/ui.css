@@ -138,7 +138,7 @@ pre {
 	position: absolute;
 	resize: none;
 	opacity:0;
-	transition:opacity 200ms ease-in;
+	transition:opacity 200ms ease-in, color 1000ms ease-in 300ms;
 }
 
 #bertsOfferResult:focus {
@@ -153,6 +153,7 @@ pre {
 	top: 35px;
 	position: absolute;
 	resize:none;
+	transition:opacity 200ms ease-in, color 1000ms ease-in 300ms;
 }
 
 #ernieOfferHolder:focus {
@@ -182,7 +183,7 @@ pre {
 	width: 410px;
 	height: 90px;
 	opacity:0;
-	transition:opacity 200ms ease-in;
+	transition:opacity 200ms ease-in, color 1000ms ease-in 300ms;
 	resize:none;
 }
 
@@ -206,7 +207,7 @@ pre {
 	width: 410px;
 	height: 90px;
 	opacity:0;
-	transition:opacity 200ms ease-in;
+	transition:opacity 200ms ease-in, color 1000ms ease-in 300ms;
 	resize:none;
 }
 
