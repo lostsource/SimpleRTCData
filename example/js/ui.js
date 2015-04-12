@@ -4,20 +4,10 @@
 window.addEventListener('load', function() {
 
 	function showCode (readyCB, container, message, index) {    
-		// adapted from http://stackoverflow.com/a/7265613/149636 
-		if(typeof(index) === 'undefined') {
-			index = 0;
-		}
-
-		if (index < message.length) { 
-			container.appendChild(document.createTextNode(message[index++]));
-			setTimeout(function () { 
-				showCode(readyCB, container, message, index); 
-			}, 5); 
-		}
-		else {
+		setTimeout(function(){
+			container.appendChild(document.createTextNode(message));
 			readyCB();
-		} 
+		},250);
 	}
 
 	function handleSessionClose() {
