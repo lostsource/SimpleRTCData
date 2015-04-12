@@ -20,6 +20,17 @@ window.addEventListener('load', function() {
 		} 
 	}
 
+	function handleSessionClose() {
+		var elm = document.getElementById('sessionClosed');
+		elm.style.width = window.screen.width+"px";		
+		elm.style.height = window.screen.height+"px";		
+		elm.style.display = "block";
+
+		document.getElementById('reloadLink').onclick = function() {
+			window.location.reload();
+		}
+	}
+
 	var code = {
 		bertsOffer: "var BertRTC = new SimpleRTCData;\nBertRTC.getOffer(function(offer) {\n  // 'offer' has to be sent to Ernie\n});",
 		erniesAnswer: "var ErnieRTC = new SimpleRTCData;\n\nErnieRTC.on('data',function(data) {\n  // get ready for messages from Bert \n  console.log(data);\n});\n\nErnieRTC.getAnswer(offer,function(answer) {\n  // 'answer' has to be sent to Bert\n});",
@@ -102,6 +113,8 @@ window.addEventListener('load', function() {
 
 			BertRTC.on('disconnect', function() {
 				console.log("%cBert:  on('disconnect')", "color:blue");
+
+				handleSessionClose();
 			});
 
 			var bertConn = BertRTC.getConnection();
@@ -259,6 +272,7 @@ window.addEventListener('load', function() {
 
 			ErnieRTC.on("disconnect", function() {
 				console.log("%cErnie: on('disconnect')", "color:maroon");
+				handleSessionClose();
 			});
 
 
