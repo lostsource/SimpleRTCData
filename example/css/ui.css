@@ -24,10 +24,24 @@ pre {
 	height:510px;
 }
 
+#bertWindow.messageSender {
+	height:570px;
+}
+
+#bertWindow.inactive {
+	opacity:.2;
+}
+
+
 #ernieWindow {
 	float:right;
 	height:182px;
 }
+
+#ernieWindow.inactive {
+	opacity:.2;
+}
+
 
 #ernieWindow.writingAnswerCode {
 	height:345px;
@@ -37,12 +51,17 @@ pre {
 	height:470px;
 }
 
+#ernieWindow.messageSender {
+	height:510px;
+}
+
+
 .execWait {
 	background-image:url('../assets/loader.gif');
 }
 
 .peerWindow {
-	transition:height 100ms ease-in;
+	transition:height 100ms ease-in, opacity 200ms ease-out;
 	background-repeat:no-repeat;
 	background-position: 95% 95%;
 	width: 450px;
@@ -82,7 +101,7 @@ pre {
 
 #erniesAnswer {
 	position: absolute;
-	left: 20px;
+	left: 12px;
 	top: 170px;
 }
 
@@ -197,6 +216,14 @@ pre {
 	left: 12px;
 }
 
+#bertSendMsg {
+	position: absolute;
+	top: 500px;
+	left: 12px;
+	visibility: hidden;
+}
+
+
 textarea {
 	font-size:small;
 }
@@ -209,19 +236,35 @@ textarea {
 	padding: 0;
 	border: 0;
 	left: 40px;
-		width: 119px;
-		border-bottom: 1px solid #cccccc;
+	width: 119px;
+	border-bottom: 1px solid #cccccc;
 	visibility:hidden;
 	background-color:orange;
 	transition:background-color 370ms ease-in;
 }
+
+#ernieMsgSender {
+	position: absolute;
+	top: 474px;
+	font-size: small;
+	font-family: monospace;
+	padding: 0;
+	border: 0;
+	left: 40px;
+	width: 119px;
+	border-bottom: 1px solid #cccccc;
+	visibility:hidden;
+	background-color:orange;
+	transition:background-color 370ms ease-in;
+}
+
 
 #bertSendMessagePrefix {
 	position: absolute;
 	top: 430px;
 	left: 26px;
 	font-weight: bold;
-	color:rgb(98, 173, 29);
+	color:rgb(64, 47, 169);
 	visibility: hidden;
 	background-color:orange;
 	transition:background-color 370ms ease-in;
@@ -233,12 +276,39 @@ textarea {
 	left: 225px;
 	visibility:hidden;
 	font-weight:bold;
-	color:rgb(98, 173, 29);
+	color:rgb(12, 123, 34);
 	background-color:orange;
 	transition:background-color 370ms ease-in;
 }
 
+#ernieSendMessagePrefix {
+	position: absolute;
+	top: 460px;
+	left: 12px;
+	font-weight: bold;
+	color:rgb(12, 123, 34);
+	visibility: hidden;
+	background-color:orange;
+	transition:background-color 370ms ease-in;
+}
+
+#ernieSendMessagePostfix {
+	position: absolute;
+	top: 460px;
+	left: 225px;
+	visibility:hidden;
+	font-weight:bold;
+	color:rgb(64, 47, 169);
+	background-color:orange;
+	transition:background-color 370ms ease-in;
+}
+
+
 #msgSender:focus {
+	outline:none;
+}
+
+#ernieMsgSender:focus {
 	outline:none;
 }
 
@@ -248,12 +318,12 @@ textarea {
 	width: 190px;
 	height: 24px;
 	padding: 0px;
-	background: rgba(56, 132, 19, 0.92);;
+	background: rgba(19, 50, 132, 0.92);
 
 	-webkit-border-radius: 6px;
 	-moz-border-radius: 6px;
 	border-radius: 5px;
-	border: rgba(56, 132, 19, 0.92) solid 1px;
+	border: rgba(19, 50, 132, 0.92) solid 1px;
 	color: white;
 	font-size: small;
 	font-family: monospace;
@@ -272,7 +342,7 @@ textarea {
 	position: absolute;
 	border-style: solid;
 	border-width: 0 11px 22px;
-	border-color: rgba(56, 132, 19, 0.92) transparent;
+	border-color: rgba(19, 50, 132, 0.92) transparent;
 	display: block;
 	width: 0;
 	z-index: 1;
@@ -285,7 +355,7 @@ textarea {
 	position: absolute;
 	border-style: solid;
 	border-width: 0 11px 22px;
-	border-color: rgba(129, 129, 129, 0.92) transparent;
+	border-color: rgba(19, 50, 132, 0.92) transparent;
 	display: block;
 	width: 0;
 	z-index: 0;
@@ -296,7 +366,27 @@ textarea {
 #msgBubble {
 	position: absolute;
 	top: 270px;
-	left: 154px;
+	left: 120px;
+}
+
+#bertMsgBubble {
+	position: absolute;
+	top: 560px;
+	left: 142px;
+}
+
+
+#bertMsgReceiver.bubble {
+	background-color: rgba(22, 132, 19, 0.92)!important;
+	border: rgba(22, 132, 19, 0.92) solid 1px!important;
+}
+
+#bertMsgReceiver.bubble:after {
+	border-color: rgba(22, 132, 19, 0.92) transparent!important;
+}
+
+#bertMsgReceiver.bubble:before {
+	border-color: rgba(22, 132, 19, 0.92) transparent!important;
 }
 
 #peerWindowContainer {
