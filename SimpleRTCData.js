@@ -332,12 +332,10 @@ function SimpleRTCData(inServers, inConstraints) {
     }
 
     Connection.onicecandidate = function(e) {
-      /// FIXME we're assuming last candidate is null,
-      /// NOTE callback might never be called or called to early
       if (e.candidate) {
         iceList.push(getCandidateCopy(e.candidate));
       }
-      else {
+      else if(Connection.iceGatheringState === "complete") {
         doCallback(offerSDP, iceList);
       }
     };
