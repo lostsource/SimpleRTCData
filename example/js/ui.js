@@ -70,15 +70,17 @@ window.addEventListener('load', function() {
 
 	elmBertMsgNpt.addEventListener('keydown',function(e){
 		if(e.keyCode === 13) {
-			BertRTC.send(this.value);
-			this.value = '';
+			BertRTC.send(this.value,function(){
+				elmBertMsgNpt.value = '';
+			});
 		}
 	});
 
 	elmErnieMsgNpt.addEventListener('keydown',function(e){
 		if(e.keyCode === 13) {
-			ErnieRTC.send(this.value);
-			this.value = '';
+			ErnieRTC.send(this.value,function(){
+				elmErnieMsgNpt.value = '';	
+			});
 		}
 	});
 

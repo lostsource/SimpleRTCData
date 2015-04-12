@@ -22,6 +22,8 @@ function SimpleRTCData(inServers, inConstraints) {
 
   var DataChannel = null;
 
+  var SendCBList = [];
+
   var that = this;
 
   function getRTCConnection() {
@@ -37,6 +39,24 @@ function SimpleRTCData(inServers, inConstraints) {
     };
 
     return new PeerConnection(servers, constraints);
+  }
+
+  function genSendCallbackID() {
+    var cbRand = new Uint8Array(new ArrayBuffer(16));
+    window.crypto.getRandomValues(cbRand);
+
+    var cbHash = "", byteHex;
+
+    for (var x = 0; x < cbRand.length; x++) {
+      byteHex = cbRand[x].toString(16);
+      if(byteHex.length === 1) {
+        byteHex = "0"+byteHex;
+      }
+
+      cbHash += byteHex;
+    }
+
+    return cbHash;
   }
 
   var ChannelEventHandlers = {}, ConnEventHandlers = {}, LibEventHandlers = {};
@@ -119,6 +139,25 @@ function SimpleRTCData(inServers, inConstraints) {
     });
   }
 
+  function isInternalPayload(payload) {
+    if(typeof(payload._internal) !== "undefined") {
+      return true;
+    }
+
+    return false;
+  }
+
+  function processInternalPayload(payload) {
+    switch(payload.type) {
+      case 'cb':
+        if(typeof(SendCBList[payload.data]) !== "undefined") {
+          SendCBList[payload.data]();
+          delete SendCBList[payload.data];
+        }
+      break;
+    }
+  }
+
   function regChannelEvents(channel) {
     channel.addEventListener('close', function() {
       if (Connected) {
@@ -128,12 +167,38 @@ function SimpleRTCData(inServers, inConstraints) {
     });
 
     channel.addEventListener('message', function(e) {
-      emitEvent('data', [e.data]);
+      var payload = e.data;
+
+      if(typeof(payload) === "string") {
+        payload = JSON.parse(payload);
+
+        if(isInternalPayload(payload)) {
+          processInternalPayload(payload);
+        }
+        else {
+          emitEvent('data', [payload.data]);
+
+          if(typeof(payload.cb) === "string") {
+            callRemoteCallback(payload.cb);
+          }
+        }
+      }
+      else {
+        emitEvent('data', [payload]); 
+      }
     });
 
     for (var x = 0; x < ChanEvList.length; x++) {
       regChannelEvent(channel, ChanEvList[x]);
     }
+  }
+
+  function callRemoteCallback(callbackId) {
+    DataChannel.send(JSON.stringify({
+      _internal: true,
+      type: 'cb',
+      data: callbackId
+    }));
   }
 
   function addChanEvHandler(evName, evHandler) {
@@ -191,12 +256,41 @@ function SimpleRTCData(inServers, inConstraints) {
     return DataChannel;
   };
 
-  this.send = function(data) {
+  this.send = function(data, callback) {
     if (!DataChannel) {
       return false;
     }
 
-    DataChannel.send(data);
+    var callbackId = "";
+
+    if(typeof(callback) === "function") {
+      // include callback id with sent data
+      callbackId = genSendCallbackID();
+
+      SendCBList[callbackId] = callback;
+    }
+
+    var payload = data;
+    var cbSupported = false;
+
+    if(typeof(data) === "string") {
+      payload = {
+        data: data
+      };
+
+      cbSupported = true;
+    }
+
+    if (callbackId && cbSupported) {
+      payload.cb = callbackId;
+    }
+
+    if(typeof(data) === "string") {
+      // strings are always wrapped as JSON
+      payload = JSON.stringify(payload);
+    }
+
+    DataChannel.send(payload);
   };
 
   this.getOffer = function(callback) {
