@@ -2,18 +2,20 @@
 
 SimpleRTCData is a tiny JavaScript library which can be used to establish an RTCDataChannel between two peers. It does not handle relaying of messages during connection setup so a separate signalling mechanism is required.
 
-- [SimpleRTCData](#)
-	- [How it works](#how-it-works)
-	- [Basic Usage](#basic-usage)
-	- [Methods](#methods)
-		- [getAnswer](#getanswer)
-		- [getConnection](#getconnection)
-		- [getDataChannel](#getdatachannel)
-		- [getOffer](#getoffer)
-		- [setAnswer](#setanswer)
-	- [Events](#events)
-		- [onChannelEvent](#onchannelevent)
-		- [onConnectionEvent](#onconnectionevent)
+- [How it works](#how-it-works)
+- [Basic Usage](#basic-usage)
+- [Methods](#methods)
+	- [getAnswer](#getanswer)
+	- [getConnection](#getconnection)
+	- [getDataChannel](#getdatachannel)
+	- [getOffer](#getoffer)
+	- [setAnswer](#setanswer)
+- [Events](#events)
+  - [on('connect')](#)
+  - [on('data')](#)
+  - [on('disconnect')](#)
+  - [onChannelEvent](#onchannelevent)
+  - [onConnectionEvent](#onconnectionevent)
 
 ## How it works
 
@@ -36,19 +38,19 @@ Assume we have two peers Bert and Ernie in which Bert is the initiator. Bert fir
       
     });
 
-The callback for `getOffer` returns a single argument `bertsOffer` of type `String` which needs to be sent to Ernie your preferred message exchange mechanism (eg. WebSockets, E-mail, magic etc..) Once Ernie receives Bert's offer he will need to create an 'answer' by passing it as the first argument to `getAnswer`. 
+The callback for `getOffer` returns a single argument `bertsOffer` of type `String` which needs to be sent to Ernie using your preferred message exchange mechanism (eg. WebSockets) Once Ernie receives Bert's offer he will need to create an 'answer' by passing it as the first argument to `getAnswer`. 
 
     var ErnieRTC = new SimpleRTCData;
      
     ErnieRTC.getAnswer(bertsOffer,function(erniesAnswer) {
-      // erniesAnswer now needs to be sent to Bert
+      // now send erniesAnswer Bert
     });
     
-He should also register a message handler using the `onChannelEvent` method as to be able to receive messages from Bert: 
+He should also listen for messages from Bert using the `on('data')` event: 
 
-    ErnieRTC.onChannelEvent('message',function(e) {
+    ErnieRTC.on('data',function(data) {
        // get ready for messages from Bert 
-       console.log(e.data);
+       console.log(data);
     });
      
     
@@ -66,7 +68,7 @@ At last send `erniesAnswer` to Bert so he can use it to call his `setAnswer` met
 ### getAnswer
 *SimpleRTCData.getAnswer(String offer, Function callback)*
 
-The *joiner* should call this method after receiving an offer from the *initiator*. The offer should be passed as the first argument. The callback function get one argument `(String answer)`
+The *joiner* should call this method after receiving an offer from the *initiator*. The offer should be passed as the first argument. The callback function gets one argument `(String answer)`
 
 ### getConnection
 *SimpleRTCData.getConnection(void)*
@@ -85,11 +87,27 @@ Returns a reference to the session's [RTCDataChannel](https://developer.mozilla.
 The *initiator* must call this method to retrieve the offer metadata which should be used by the *joiner* as the first argument for the `getAnswer` method. The callback function gets one argument `(String offer)`.
 
 ### setAnswer
-*SimpleRTCData.setAnswer(String answer)*
+*SimpleRTCData.setAnswer(String answer, [Function callback])*
 
-The *initiator* must call this method after receiving an answer from the *joiner*. The answer should be passed as the first argument.
+The *initiator* must call this method after receiving an answer from the *joiner*. The answer should be passed as the first argument. The second optional argument can be used to check if the call was successful.
+
 
 ## Events
+
+### on('connect')
+*SimpleRTCData.on('connect', Function callback)*
+
+Emitted when [RTCPeerConnection.iceConnectionState](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/iceConnectionState) has a value of `completed` and [RTCDataChannel.readyState](https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel/readyState) is `open`. At this point peers can start exchanging messages.
+
+### on('data')
+*SimpleRTCData.on('data', Function callback)*
+
+Emitted when a message event is received on the [RTCDataChannel](https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel/onmessage). The callback receives one argument `data` containing the message payload.
+
+### on('disconnect')
+*SimpleRTCData.on('disconnect', Function callback)*
+
+Emitted when [RTCPeerConnection.iceConnectionState](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/iceConnectionState) has a value of `disconnected` or the [RTCDataChannel.onclose](https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel/onclose) event is triggered.
 
 ### onChannelEvent
 *SimpleRTCData.onChannelEvent(String eventType, Function callback)*
