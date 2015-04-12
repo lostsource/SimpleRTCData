@@ -11,9 +11,9 @@ SimpleRTCData is a tiny JavaScript library which can be used to establish an RTC
 	- [getOffer](#getoffer)
 	- [setAnswer](#setanswer)
 - [Events](#events)
-  - [on('connect')](#)
-  - [on('data')](#)
-  - [on('disconnect')](#)
+  - [on('connect')](#onconnect)
+  - [on('data')](#ondata)
+  - [on('disconnect')](#ondisconnect)
   - [onChannelEvent](#onchannelevent)
   - [onConnectionEvent](#onconnectionevent)
 
