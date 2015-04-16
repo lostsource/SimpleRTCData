@@ -115,6 +115,11 @@ window.addEventListener('load', function() {
 				handleSessionClose();
 			});
 
+
+			BertRTC.on("data", function() {
+				console.log("%cBert:  on('data')", "color:blue");
+			});
+
 			var bertConn = BertRTC.getConnection();
 
 			BertRTC.onConnectionEvent('*',function(e){
@@ -195,12 +200,6 @@ window.addEventListener('load', function() {
 		var answerVal = this.value.trim();
 		// check if it parses as JSON
 		try {
-			var answerObj = JSON.parse(answerVal);
-			if(!((answerObj.sdp) && (answerObj.sdp.type === 'answer'))) {
-				console.warn("INVALID ANSWER CONTENT");
-				return;
-			}
-
 			elmBertWindow.classList.add('settingAnswer');
 			showCode(function(){
 				BertRTC.on('connect',function(){
@@ -225,7 +224,9 @@ window.addEventListener('load', function() {
 				elmBertWindow.classList.add('execWait');
 				BertRTC.setAnswer(answerVal, function(detail) {
 					if(detail.error) {
-						console.warn(detail.error);
+						console.error(detail.error);
+						SettingAnswer = false;
+
 					}
 					else {
 						if(elmErnieOfferHolder.value.trim().length === 0) {

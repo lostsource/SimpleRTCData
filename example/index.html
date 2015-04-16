@@ -7,9 +7,12 @@
 	<link href='css/ui.css' rel='stylesheet' type='text/css'/>
 	<script type='text/javascript' src='../SimpleRTCData.js'></script>
 	<script type='text/javascript' src='js/ui.js'></script>
+	<link href='http://fonts.googleapis.com/css?family=Rancho' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
 </head>
 <body>
-<h3 style='text-align:center; margin-bottom:0;'>SimpleRTCData is available on <a href='https://github.com/lostsource/SimpleRTCData'>Github</a></h3>
+<h1 style='text-align:center; margin-bottom:0;'>SimpleRTCData</h1>
+<h2>browser-to-browser messaging simplified</h2>
 <div id='sessionClosed'>
 	<div id='reloadMsg'>Session Closed :( <a id='reloadLink' href='#'>Reload</a> ?</div>
 </div>
@@ -24,7 +27,7 @@
 			<textarea spellcheck="false" id='bertsOfferResult' class='offerArea' readonly='true' placeholder='Bert&apos;s offer will appear here..'></textarea>
 
 			<div class='stepGuide' id='bertsAnswerGuide'>Bert is now waiting for Ernie to <em>create an answer</em>..</div>		
-			<textarea spellcheck="false" id='bertsAnswerHolder' class='answerArea' placeholder='This is where Bert should enter Earnie&apos;s answer'></textarea>
+			<textarea spellcheck="false" id='bertsAnswerHolder' class='answerArea' placeholder='Earnie&apos;s answer'></textarea>
 			<pre id='bertSetAnswer'></pre>
 			<pre id='bertSendMessagePrefix'>BertRTC.send("</pre><pre id='bertSendMessagePostfix'>");</pre>
 			<input type='text' id='msgSender' placeholder='type &amp; hit enter!'/>
@@ -44,10 +47,10 @@
 	<div id='ernieWindow' class='peerWindow'>
 		<div style='position:relative; width:100%; height:100%;'>
 			<div id='ernieThumb'></div>
-			<div class='stepGuide' id='erniesOfferGuide'>Ernie is waiting for Bert <em>create an offer</em>..</div>
+			<div class='stepGuide' id='erniesOfferGuide'>Ernie is the <em>joiner</em> who&apos;s waiting for Bert's <em>offer</em>..</div>
 			<pre id='erniesAnswer'></pre>
 
-			<textarea spellcheck="false" id='ernieOfferHolder' class='offerArea' placeholder='This is where Earnie should enter Bert&apos;s offer..'></textarea>
+			<textarea spellcheck="false" id='ernieOfferHolder' class='offerArea' placeholder='Bert&apos;s offer'></textarea>
 
 			<div id='erniesAnswerGuide' class='stepGuide'>Once he has an offer he will be able to <button id='bttCreateAnswer' disabled>create an answer</button></div>
 
@@ -62,6 +65,8 @@
 		</div>
 	</div>
 </div>
+
+<span id="forkongithub"><a href="https://github.com/lostsource/SimpleRTCData">Fork me on GitHub</a></span>
 
 </body>
 </html>
