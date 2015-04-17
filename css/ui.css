@@ -1,5 +1,5 @@
 body {
-	background-color:#eeeeee;
+	background-color:#f7f7f7;
 	margin:0;
 	font-family:sans-serif;
 	min-width:1000px;
@@ -8,6 +8,91 @@ body {
 
 pre {
 	color: rgb(134, 88, 28);
+}
+
+h1 {
+  font-family: 'Rancho', cursive;
+  font-size: 5em;
+    color: #4E495A;
+  text-shadow: 4px 6px 0px #D2D2D2;
+  letter-spacing: 5px;
+  margin-top: 15px;
+}
+
+h2 {
+  border-bottom: 2px solid rgb(130, 166, 200);;
+  padding-bottom: 12px;
+  width: 1000px;
+  margin: 0 auto;
+  color: #A8763E;
+  text-shadow: 2px 2px 0px white;
+  font-size: 1.4em;
+  font-family: 'Titillium Web', sans-serif;
+  font-weight: normal;
+  position:relative;
+  height:32px;
+  background-color:#f7f7f7;
+  z-index:10;
+  box-shadow:2px 0px 4px 6px #f7f7f7;
+}
+
+#slogan {
+	position:absolute;
+	visibility:hidden;
+	transition:right 200ms ease-out;
+	margin-top: 5px;
+}
+
+#smallTitle {
+	margin-left:20px;
+}
+
+#titleCont {
+  width: 980px;
+  margin: 0 auto;
+  position: absolute;
+  font-family: 'Rancho', cursive;
+font-size: 1.3em;
+  margin-top: 5px;
+  color: #4E495A;
+  text-shadow: 2px 3px 0px #D2D2D2;
+  letter-spacing: 1px;
+  opacity:0;
+  transition:all 200ms ease-out;
+  z-index:15;
+}
+
+#sloganShadow {
+
+  padding-bottom: 12px;
+  width: 980px;
+  margin: 0 auto;
+  margin-top: 10px;
+  color: #A8763E;
+  text-shadow: 2px 2px 0px white;
+  font-size: 1.4em;
+  font-family: 'Titillium Web', sans-serif;
+  font-weight: normal;
+}
+
+#summary {
+  width: 960px;
+  margin: 10px auto;
+  font-family: 'Titillium Web', sans-serif;
+  font-weight: normal;
+  text-shadow: 1px 1px 1px white;
+  color: #4D4D4D;
+  margin-top: 15px;
+}
+
+#summary a {
+	font-weight:bold;
+	text-decoration: none;
+	color:#4d4d4d;
+}
+
+#summary a:hover {
+	color:#A8763E;
 }
 
 #bertWindow {
@@ -71,6 +156,7 @@ pre {
 	border-radius: 3px;
 	box-shadow: 0px 0px 7px 0px #aaaaaa;
 	margin: 20px;
+	overflow: hidden;
 }
 
 #bertThumb {
@@ -138,7 +224,7 @@ pre {
 	position: absolute;
 	resize: none;
 	opacity:0;
-	transition:opacity 200ms ease-in;
+	transition:opacity 200ms ease-in, color 1000ms ease-in 300ms;
 }
 
 #bertsOfferResult:focus {
@@ -153,6 +239,7 @@ pre {
 	top: 35px;
 	position: absolute;
 	resize:none;
+	transition:opacity 200ms ease-in, color 1000ms ease-in 300ms;
 }
 
 #ernieOfferHolder:focus {
@@ -182,7 +269,7 @@ pre {
 	width: 410px;
 	height: 90px;
 	opacity:0;
-	transition:opacity 200ms ease-in;
+	transition:opacity 200ms ease-in, color 1000ms ease-in 300ms;
 	resize:none;
 }
 
@@ -206,7 +293,7 @@ pre {
 	width: 410px;
 	height: 90px;
 	opacity:0;
-	transition:opacity 200ms ease-in;
+	transition:opacity 200ms ease-in, color 1000ms ease-in 300ms;
 	resize:none;
 }
 
@@ -392,4 +479,102 @@ textarea {
 #peerWindowContainer {
 	width:1020px;
 	margin:10px auto;
+}
+
+#sessionClosed {
+	position:absolute;
+	top:0;
+	left:0;
+	background-color:rgba(0,0,0,0.7);
+	display:none;
+	z-index: 50;
+}
+
+#reloadMsg {
+  width: 260px;
+  height: 50px;
+  color: white;
+  position: absolute;
+  font-size: small;
+  background-color: rgb(0, 123, 128);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 70px auto;
+  z-index: 100;
+  line-height: 50px;
+  text-align: center;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow: 0px 0px 6px 0px rgba(3, 3, 3, 0.65);
+}
+
+#reloadMsg a {
+	color:rgb(239, 236, 50);
+	text-decoration: none;
+}
+
+#reloadMsg a:hover {
+	text-decoration: underline;
+}
+
+/** fork me ribbon **/
+
+#forkongithub a {
+    background: #4E495A;
+    color: #fff;
+    text-decoration: none;
+    font-family: arial, sans-serif;
+    text-align: center;
+    font-weight: bold;
+    padding: 5px 40px;
+    font-size: 1rem;
+    line-height: 2rem;
+    position: relative;
+    transition: 0.5s;
+}
+#forkongithub a:hover {
+    background: #7E591F;;
+    color: #fff;
+}
+
+#forkongithub a::before,
+#forkongithub a::after {
+    content: "";
+    width: 100%;
+    display: block;
+    position: absolute;
+    top: 1px;
+    left: 0;
+    height: 1px;
+    background: #fff;
+}
+#forkongithub a::after {
+    bottom: 1px;
+    top: auto;
+}
+@media screen and (min-width: 800px) {
+    #forkongithub {
+        position: fixed;
+        display: block;
+        top: 0;
+        right: 0;
+        width: 200px;
+        overflow: hidden;
+        height: 200px;
+        z-index: 9999;
+    }
+    #forkongithub a {
+        width: 200px;
+        position: absolute;
+        top: 60px;
+        right: -60px;
+        transform: rotate(45deg);
+        -webkit-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        -moz-transform: rotate(45deg);
+        -o-transform: rotate(45deg);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+    }
 }

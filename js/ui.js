@@ -2,22 +2,115 @@
 'use strict';
 
 window.addEventListener('load', function() {
+	var pageHeading = document.getElementById('libTitle');
+	var leftTitle = document.getElementById('titleCont');
+	var sloganCont = document.getElementById('sloganCont');
+	var summaryElm = document.getElementById('summary');
 
-	function showCode (readyCB, container, message, index) {    
-		// adapted from http://stackoverflow.com/a/7265613/149636 
-		if(typeof(index) === 'undefined') {
-			index = 0;
+	function updateHeaderPosition(force) {
+		if((sloganCont.style.position === "fixed") || (force)) {
+
+			var sloganWidth = sloganCont.offsetWidth;
+			var fromLeft = Math.floor((document.body.offsetWidth-sloganWidth)/2);
+			sloganCont.style.left = fromLeft+"px";
+		}		
+	}
+
+	function fixHeader() {
+		updateHeaderPosition(true);
+		sloganCont.style.top = "0px";
+		sloganCont.style.position = "fixed";
+
+		summaryElm.style.marginTop = '60px';
+	}
+
+	function releaseHeader() {
+		sloganCont.style.position = "relative";		
+
+		summaryElm.style.marginTop = '15px';
+		sloganCont.style.left = "0px";
+	}
+
+	function updateUIByScroll() {
+		
+		var opacity = (1-(window.scrollY/100));
+		if(opacity < 0) {
+			opacity = 0;
+		}
+		else if(opacity > 1) {
+			opacity = 1;
 		}
 
-		if (index < message.length) { 
-			container.appendChild(document.createTextNode(message[index++]));
-			setTimeout(function () { 
-				showCode(readyCB, container, message, index); 
-			}, 5); 
+		pageHeading.style.opacity = opacity;
+
+		if(window.scrollY >= 115) {
+			sloganSpan.style.right = "20px";
+			leftTitle.style.opacity = 1;
+//			leftTitle.style.top = "0px";
+			sloganSpan.setAttribute('data-istoright','true');
+			fixHeader();
 		}
 		else {
+			sloganSpan.style.right = getSloganRight()+"px";
+			leftTitle.style.opacity = 0;
+//			leftTitle.style.top = "-40px";
+			sloganSpan.setAttribute('data-istoright','false');
+			releaseHeader();
+		}
+
+	}
+
+	var sloganRight = null;
+
+	function getSloganRight() {
+		if(sloganRight) {
+			return sloganRight;
+		}
+		var sloganContainer = sloganSpan.parentNode;
+		sloganRight = Math.floor((sloganContainer.offsetWidth-sloganSpan.offsetWidth)/2);
+		return sloganRight;
+	}
+
+	var sloganElm = document.getElementById('slogan');
+	var sloganSpan = sloganElm;
+
+	sloganElm.style.right = getSloganRight()+"px";
+	sloganElm.style.visibility = "visible";
+
+	window.addEventListener('scroll',function(){
+		updateUIByScroll();
+	});
+
+	window.addEventListener('resize',function(){
+		updateHeaderPosition();
+	});
+
+
+	updateUIByScroll();
+
+	function showCode (readyCB, container, message, index) {    
+		setTimeout(function(){
+			container.appendChild(document.createTextNode(message));
 			readyCB();
-		} 
+		},250);
+	}
+
+	function handleSessionClose() {
+		var elm = document.getElementById('sessionClosed');
+		elm.style.width = window.screen.width+"px";		
+		elm.style.height = window.screen.height+"px";		
+		elm.style.display = "block";
+
+		document.getElementById('reloadLink').onclick = function() {
+			window.location.reload();
+		}
+	}
+
+	function dimTextAreas() {
+		var tareas = document.querySelectorAll('textarea');
+		for(var x = 0; x < tareas.length; x++) {
+			tareas[x].style.color = '#aaaaaa';
+		}
 	}
 
 	var code = {
@@ -98,10 +191,18 @@ window.addEventListener('load', function() {
 			BertRTC = new SimpleRTCData();
 			BertRTC.on('connect', function() {
 				console.log("%cBert:  on('connect')", "color:blue");
+				dimTextAreas();
 			});
 
 			BertRTC.on('disconnect', function() {
 				console.log("%cBert:  on('disconnect')", "color:blue");
+
+				handleSessionClose();
+			});
+
+
+			BertRTC.on("data", function() {
+				console.log("%cBert:  on('data')", "color:blue");
 			});
 
 			var bertConn = BertRTC.getConnection();
@@ -131,7 +232,7 @@ window.addEventListener('load', function() {
 				elmBertWindow.addEventListener('transitionend',function(e){
 					if(e.propertyName === "height") {
 						elmBertMsgSender.style.visibility = "visible";
-
+						elmBertWindow.style.overflow = "visible";
 
 
 						/*
@@ -184,15 +285,11 @@ window.addEventListener('load', function() {
 		var answerVal = this.value.trim();
 		// check if it parses as JSON
 		try {
-			var answerObj = JSON.parse(answerVal);
-			if(!((answerObj.sdp) && (answerObj.sdp.type === 'answer'))) {
-				console.warn("INVALID ANSWER CONTENT");
-				return;
-			}
-
 			elmBertWindow.classList.add('settingAnswer');
 			showCode(function(){
 				BertRTC.on('connect',function(){
+					dimTextAreas();
+
 					// triggered when we're read to send a message
 					elmBertSendMsgPrefix.style.visibility = "visible";
 					elmBertSendMsgPrefix.style.backgroundColor = 'transparent';
@@ -212,7 +309,9 @@ window.addEventListener('load', function() {
 				elmBertWindow.classList.add('execWait');
 				BertRTC.setAnswer(answerVal, function(detail) {
 					if(detail.error) {
-						console.warn(detail.error);
+						console.error(detail.error);
+						SettingAnswer = false;
+
 					}
 					else {
 						if(elmErnieOfferHolder.value.trim().length === 0) {
@@ -259,6 +358,7 @@ window.addEventListener('load', function() {
 
 			ErnieRTC.on("disconnect", function() {
 				console.log("%cErnie: on('disconnect')", "color:maroon");
+				handleSessionClose();
 			});
 
 

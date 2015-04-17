@@ -45,12 +45,12 @@ function SimpleRTCData(inServers, inConstraints) {
     var cbRand = new Uint8Array(new ArrayBuffer(16));
     window.crypto.getRandomValues(cbRand);
 
-    var cbHash = "", byteHex;
+    var cbHash = '', byteHex;
 
     for (var x = 0; x < cbRand.length; x++) {
       byteHex = cbRand[x].toString(16);
-      if(byteHex.length === 1) {
-        byteHex = "0"+byteHex;
+      if (byteHex.length === 1) {
+        byteHex = '0' + byteHex;
       }
 
       cbHash += byteHex;
@@ -134,13 +134,28 @@ function SimpleRTCData(inServers, inConstraints) {
   }
 
   function regChannelEvent(channel, evName) {
+    var msgPayload = null;
+
     channel.addEventListener(evName, function(e) {
+      if(e.type === "message") {
+        if (typeof (e.data) === "string") {
+          // do not forward internal events
+          try {
+            msgPayload = JSON.parse(e.data)
+            if(msgPayload._internal) {
+              return;
+            }
+          }
+          catch(e) {};
+        }
+      }
+
       forwardChannelEvent.apply(this, [e]);
     });
   }
 
   function isInternalPayload(payload) {
-    if(typeof(payload._internal) !== "undefined") {
+    if (typeof(payload._internal) !== 'undefined') {
       return true;
     }
 
@@ -148,13 +163,13 @@ function SimpleRTCData(inServers, inConstraints) {
   }
 
   function processInternalPayload(payload) {
-    switch(payload.type) {
+    switch (payload.type) {
       case 'cb':
-        if(typeof(SendCBList[payload.data]) !== "undefined") {
+        if (typeof (SendCBList[payload.data]) !== 'undefined') {
           SendCBList[payload.data]();
           delete SendCBList[payload.data];
         }
-      break;
+        break;
     }
   }
 
@@ -169,22 +184,22 @@ function SimpleRTCData(inServers, inConstraints) {
     channel.addEventListener('message', function(e) {
       var payload = e.data;
 
-      if(typeof(payload) === "string") {
+      if (typeof(payload) === 'string') {
         payload = JSON.parse(payload);
 
-        if(isInternalPayload(payload)) {
+        if (isInternalPayload(payload)) {
           processInternalPayload(payload);
         }
         else {
           emitEvent('data', [payload.data]);
 
-          if(typeof(payload.cb) === "string") {
+          if (typeof (payload.cb) === 'string') {
             callRemoteCallback(payload.cb);
           }
         }
       }
       else {
-        emitEvent('data', [payload]); 
+        emitEvent('data', [payload]);
       }
     });
 
@@ -261,9 +276,9 @@ function SimpleRTCData(inServers, inConstraints) {
       return false;
     }
 
-    var callbackId = "";
+    var callbackId = '';
 
-    if(typeof(callback) === "function") {
+    if (typeof (callback) === 'function') {
       // include callback id with sent data
       callbackId = genSendCallbackID();
 
@@ -273,7 +288,7 @@ function SimpleRTCData(inServers, inConstraints) {
     var payload = data;
     var cbSupported = false;
 
-    if(typeof(data) === "string") {
+    if (typeof (data) === 'string') {
       payload = {
         data: data
       };
@@ -285,7 +300,7 @@ function SimpleRTCData(inServers, inConstraints) {
       payload.cb = callbackId;
     }
 
-    if(typeof(data) === "string") {
+    if (typeof (data) === 'string') {
       // strings are always wrapped as JSON
       payload = JSON.stringify(payload);
     }
@@ -332,12 +347,10 @@ function SimpleRTCData(inServers, inConstraints) {
     }
 
     Connection.onicecandidate = function(e) {
-      /// FIXME we're assuming last candidate is null,
-      /// NOTE callback might never be called or called to early
       if (e.candidate) {
         iceList.push(getCandidateCopy(e.candidate));
       }
-      else {
+      else if (Connection.iceGatheringState === 'complete') {
         doCallback(offerSDP, iceList);
       }
     };
@@ -381,19 +394,11 @@ function SimpleRTCData(inServers, inConstraints) {
   }
 
   this.setAnswer = function(answer, callback) {
-    callback = callback || function() {};
-
-    if (typeof(answer) === 'string') {
-      try {
-        answer = JSON.parse(answer);
+    callback = callback || function(detail) {
+      if(detail.error) {
+        throw new Error(detail.error);
       }
-      catch (e) {
-        throw new Error('setAnswer: Invalid answer, this should be the result of a call to getAnswer');
-      }
-    }
-    else {
-      throw new Error('setAnswer: Argument 1 must be the result of a call to getAnswer');
-    }
+    };
 
     var didCallback = false;
 
@@ -407,13 +412,16 @@ function SimpleRTCData(inServers, inConstraints) {
 
       Connection.removeEventListener('iceconnectionstatechange', checkAnswerReady);
 
+      if(err) {
+        err = "SimpleRTCData.setAnswer Failed: " + err;
+      }
+
       callback({
         error: err
       });
     }
 
     function checkAnswerReady() {
-
       switch (Connection.iceConnectionState) {
         case 'completed':
         case 'connected':
@@ -426,13 +434,32 @@ function SimpleRTCData(inServers, inConstraints) {
       }
     }
 
+    if (typeof(answer) === 'string') {
+      try {
+        answer = JSON.parse(answer);
+      }
+      catch (e) {
+        doCallback("Malformed Answer Supplied");
+        return false;
+      }
+    }
+    else {
+      doCallback('Expected `string` for Argument 1 (answer) got `' + typeof(answer) + '` instead');
+      return false;
+    }
+
+    if(answer.sdp && answer.sdp.type === "offer") {
+      doCallback("Expected Argument 1 to be `Answer` but got an `Offer` instead.");
+      return false;
+    }
+
     Connection.addEventListener('iceconnectionstatechange', checkAnswerReady);
 
     var remoteSDP = new SessionDescription(answer.sdp);
     Connection.setRemoteDescription(remoteSDP, function() {
       addCanditateList(answer.icecandidates);
     },function() {
-      throw new Error('setAnswer: Failed to setRemoteDescription');
+      doCallback('Failed to setRemoteDescription');
     });
   };
 
