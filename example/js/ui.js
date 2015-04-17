@@ -2,6 +2,91 @@
 'use strict';
 
 window.addEventListener('load', function() {
+	var pageHeading = document.getElementById('libTitle');
+	var leftTitle = document.getElementById('titleCont');
+	var sloganCont = document.getElementById('sloganCont');
+	var summaryElm = document.getElementById('summary');
+
+	function updateHeaderPosition(force) {
+		if((sloganCont.style.position === "fixed") || (force)) {
+
+			var sloganWidth = sloganCont.offsetWidth;
+			var fromLeft = Math.floor((document.body.offsetWidth-sloganWidth)/2);
+			sloganCont.style.left = fromLeft+"px";
+		}		
+	}
+
+	function fixHeader() {
+		updateHeaderPosition(true);
+		sloganCont.style.top = "0px";
+		sloganCont.style.position = "fixed";
+
+		summaryElm.style.marginTop = '60px';
+	}
+
+	function releaseHeader() {
+		sloganCont.style.position = "relative";		
+
+		summaryElm.style.marginTop = '15px';
+		sloganCont.style.left = "0px";
+	}
+
+	function updateUIByScroll() {
+		
+		var opacity = (1-(window.scrollY/100));
+		if(opacity < 0) {
+			opacity = 0;
+		}
+		else if(opacity > 1) {
+			opacity = 1;
+		}
+
+		pageHeading.style.opacity = opacity;
+
+		if(window.scrollY >= 115) {
+			sloganSpan.style.right = "20px";
+			leftTitle.style.opacity = 1;
+//			leftTitle.style.top = "0px";
+			sloganSpan.setAttribute('data-istoright','true');
+			fixHeader();
+		}
+		else {
+			sloganSpan.style.right = getSloganRight()+"px";
+			leftTitle.style.opacity = 0;
+//			leftTitle.style.top = "-40px";
+			sloganSpan.setAttribute('data-istoright','false');
+			releaseHeader();
+		}
+
+	}
+
+	var sloganRight = null;
+
+	function getSloganRight() {
+		if(sloganRight) {
+			return sloganRight;
+		}
+		var sloganContainer = sloganSpan.parentNode;
+		sloganRight = Math.floor((sloganContainer.offsetWidth-sloganSpan.offsetWidth)/2);
+		return sloganRight;
+	}
+
+	var sloganElm = document.getElementById('slogan');
+	var sloganSpan = sloganElm;
+
+	sloganElm.style.right = getSloganRight()+"px";
+	sloganElm.style.visibility = "visible";
+
+	window.addEventListener('scroll',function(){
+		updateUIByScroll();
+	});
+
+	window.addEventListener('resize',function(){
+		updateHeaderPosition();
+	});
+
+
+	updateUIByScroll();
 
 	function showCode (readyCB, container, message, index) {    
 		setTimeout(function(){
@@ -147,7 +232,7 @@ window.addEventListener('load', function() {
 				elmBertWindow.addEventListener('transitionend',function(e){
 					if(e.propertyName === "height") {
 						elmBertMsgSender.style.visibility = "visible";
-
+						elmBertWindow.style.overflow = "visible";
 
 
 						/*

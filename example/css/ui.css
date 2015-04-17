@@ -20,8 +20,50 @@ h1 {
 }
 
 h2 {
-text-align: center;
-  border-bottom: 2px solid #9FCDD3;
+  border-bottom: 2px solid rgb(130, 166, 200);;
+  padding-bottom: 12px;
+  width: 1000px;
+  margin: 0 auto;
+  color: #A8763E;
+  text-shadow: 2px 2px 0px white;
+  font-size: 1.4em;
+  font-family: 'Titillium Web', sans-serif;
+  font-weight: normal;
+  position:relative;
+  height:32px;
+  background-color:#f7f7f7;
+  z-index:10;
+  box-shadow:2px 0px 4px 6px #f7f7f7;
+}
+
+#slogan {
+	position:absolute;
+	visibility:hidden;
+	transition:right 200ms ease-out;
+	margin-top: 5px;
+}
+
+#smallTitle {
+	margin-left:20px;
+}
+
+#titleCont {
+  width: 980px;
+  margin: 0 auto;
+  position: absolute;
+  font-family: 'Rancho', cursive;
+font-size: 1.3em;
+  margin-top: 5px;
+  color: #4E495A;
+  text-shadow: 2px 3px 0px #D2D2D2;
+  letter-spacing: 1px;
+  opacity:0;
+  transition:all 200ms ease-out;
+  z-index:15;
+}
+
+#sloganShadow {
+
   padding-bottom: 12px;
   width: 980px;
   margin: 0 auto;
@@ -29,8 +71,28 @@ text-align: center;
   color: #A8763E;
   text-shadow: 2px 2px 0px white;
   font-size: 1.4em;
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Titillium Web', sans-serif;
   font-weight: normal;
+}
+
+#summary {
+  width: 960px;
+  margin: 10px auto;
+  font-family: 'Titillium Web', sans-serif;
+  font-weight: normal;
+  text-shadow: 1px 1px 1px white;
+  color: #4D4D4D;
+  margin-top: 15px;
+}
+
+#summary a {
+	font-weight:bold;
+	text-decoration: none;
+	color:#4d4d4d;
+}
+
+#summary a:hover {
+	color:#A8763E;
 }
 
 #bertWindow {
@@ -94,6 +156,7 @@ text-align: center;
 	border-radius: 3px;
 	box-shadow: 0px 0px 7px 0px #aaaaaa;
 	margin: 20px;
+	overflow: hidden;
 }
 
 #bertThumb {
@@ -472,9 +535,10 @@ textarea {
     transition: 0.5s;
 }
 #forkongithub a:hover {
-    background: #7E705A;
+    background: #7E591F;;
     color: #fff;
 }
+
 #forkongithub a::before,
 #forkongithub a::after {
     content: "";

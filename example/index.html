@@ -3,16 +3,21 @@
 <head>
 	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
 	<meta content="utf-8" http-equiv="encoding">
-	<title>SimpleRTCData Example</title>
+	<title>SimpleRTCData - Browser to Browser Messaging Simplified</title>
 	<link href='css/ui.css' rel='stylesheet' type='text/css'/>
 	<script type='text/javascript' src='../SimpleRTCData.js'></script>
 	<script type='text/javascript' src='js/ui.js'></script>
 	<link href='https://fonts.googleapis.com/css?family=Rancho' rel='stylesheet' type='text/css'>
-	<link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=Titillium+Web' rel='stylesheet' type='text/css'>
 </head>
 <body>
-<h1 style='text-align:center; margin-bottom:0;'>SimpleRTCData</h1>
-<h2>browser-to-browser messaging simplified</h2>
+<h1 id='libTitle' style='text-align:center; margin-bottom:0;'>SimpleRTCData</h1>
+
+<h2 id='sloganCont'><div id='titleCont'>
+	<div id='smallTitle'>SimpleRTCData</div>
+</div><span id='slogan'>browser-to-browser messaging simplified</span></h2>
+
+<p id='summary'><a href='https://github.com/lostsource/SimpleRTCData'>SimpleRTCData</a> is a tiny <a href='https://github.com/lostsource/SimpleRTCData'>open source</a> JavaScript library which can be used to establish a standard <a href='https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel'>RTCDataChannel</a> between two peers. It does not handle relaying of messages during connection setup so a separate signalling mechanism is required. <a href='https://github.com/lostsource/SimpleRTCData#basic-usage'>Documentation</a> is available on GitHub and an example where you can use copy+paste to simulate the initial signalling message exchange is available below.</p>
 <div id='sessionClosed'>
 	<div id='reloadMsg'>Session Closed :( <a id='reloadLink' href='#'>Reload</a> ?</div>
 </div>
@@ -65,8 +70,5 @@
 		</div>
 	</div>
 </div>
-
-<span id="forkongithub"><a href="https://github.com/lostsource/SimpleRTCData">Fork me on GitHub</a></span>
-
 </body>
 </html>
