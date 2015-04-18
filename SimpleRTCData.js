@@ -5,8 +5,12 @@ function SimpleRTCData(inServers, inConstraints) {
   // set to 'offer' or 'answer' depending on call to getOffer or getAnswer
   var inMode = null;
 
+  var PayloadTypes = {
+    cb: 0x01
+  };
+
   // set to true when iceConnectionState is completed/connected
-  var Connected = false; 
+  var Connected = false;
 
   var PeerConnection = window.RTCPeerConnection ||
                        window.mozRTCPeerConnection ||
@@ -26,6 +30,8 @@ function SimpleRTCData(inServers, inConstraints) {
 
   var that = this;
 
+  var LENGTH_CBID = 8;
+
   function getRTCConnection() {
     var servers = inServers || {'iceServers': [
       {'url': 'stun:stun.l.google.com:19302'}
@@ -41,14 +47,11 @@ function SimpleRTCData(inServers, inConstraints) {
     return new PeerConnection(servers, constraints);
   }
 
-  function genSendCallbackID() {
-    var cbRand = new Uint8Array(new ArrayBuffer(16));
-    window.crypto.getRandomValues(cbRand);
-
+  function typedArrToHex(arr) {
     var cbHash = '', byteHex;
 
-    for (var x = 0; x < cbRand.length; x++) {
-      byteHex = cbRand[x].toString(16);
+    for (var x = 0; x < arr.length; x++) {
+      byteHex = arr[x].toString(16);
       if (byteHex.length === 1) {
         byteHex = '0' + byteHex;
       }
@@ -57,6 +60,18 @@ function SimpleRTCData(inServers, inConstraints) {
     }
 
     return cbHash;
+
+  }
+
+  function genSendCallbackID(getAsBuffer) {
+    var cbRand = new Uint8Array(new ArrayBuffer(LENGTH_CBID));
+    window.crypto.getRandomValues(cbRand);
+
+    if (getAsBuffer) {
+      return cbRand.buffer;
+    }
+
+    return typedArrToHex(cbRand);
   }
 
   var ChannelEventHandlers = {}, ConnEventHandlers = {}, LibEventHandlers = {};
@@ -137,16 +152,16 @@ function SimpleRTCData(inServers, inConstraints) {
     var msgPayload = null;
 
     channel.addEventListener(evName, function(e) {
-      if(e.type === "message") {
-        if (typeof (e.data) === "string") {
+      if (e.type === 'message') {
+        if (typeof (e.data) === 'string') {
           // do not forward internal events
           try {
-            msgPayload = JSON.parse(e.data)
-            if(msgPayload._internal) {
+            msgPayload = JSON.parse(e.data);
+            if (msgPayload._internal) {
               return;
             }
           }
-          catch(e) {};
+          catch (e) {}
         }
       }
 
@@ -173,6 +188,21 @@ function SimpleRTCData(inServers, inConstraints) {
     }
   }
 
+  function processPayload(payload, callback) {
+    if(payload instanceof Blob) {
+
+      var fileReader = new FileReader();
+      fileReader.onload = function() {
+          callback(this.result);
+      };
+      fileReader.readAsArrayBuffer(payload);
+
+      return true;
+    }
+
+    callback(payload);
+  }
+
   function regChannelEvents(channel) {
     channel.addEventListener('close', function() {
       if (Connected) {
@@ -182,25 +212,50 @@ function SimpleRTCData(inServers, inConstraints) {
     });
 
     channel.addEventListener('message', function(e) {
-      var payload = e.data;
+      processPayload(e.data, function(payload) {
 
-      if (typeof(payload) === 'string') {
-        payload = JSON.parse(payload);
 
-        if (isInternalPayload(payload)) {
-          processInternalPayload(payload);
-        }
-        else {
-          emitEvent('data', [payload.data]);
+        if (typeof(payload) === 'string') {
+          payload = JSON.parse(payload);
 
-          if (typeof (payload.cb) === 'string') {
-            callRemoteCallback(payload.cb);
+          if (isInternalPayload(payload)) {
+            processInternalPayload(payload);
+          }
+          else {
+            emitEvent('data', [payload.data]);
+
+            if (typeof (payload.cb) === 'string') {
+              callRemoteCallback(payload.cb);
+            }
           }
         }
-      }
-      else {
-        emitEvent('data', [payload]);
-      }
+        else {
+          var payloadView = new Uint8Array(payload);
+          var dataStart = 2;
+          var cbBfr = null, cbView = null;
+
+          if (payloadView[0] === PayloadTypes.cb) {
+            dataStart += LENGTH_CBID;
+
+            cbBfr = new ArrayBuffer(LENGTH_CBID);
+            cbView = new Uint8Array(cbBfr);
+
+            cbView.set(payloadView.subarray(2, LENGTH_CBID + 2));
+          }
+
+          var dataPayload = new ArrayBuffer(payload.byteLength - dataStart);
+          var dataPayloadView = new Uint8Array(dataPayload);
+          dataPayloadView.set(payloadView.subarray(dataStart));
+
+          emitEvent('data', [dataPayload]);
+
+          if (cbView) {
+            callRemoteCallback(typedArrToHex(cbView));
+          }
+        }
+
+      });
+
     });
 
     for (var x = 0; x < ChanEvList.length; x++) {
@@ -258,6 +313,25 @@ function SimpleRTCData(inServers, inConstraints) {
     };
   }
 
+  function addHeaderToBuffer(bfr, callbackId) {
+    // 2 bytes for header type and reserved byte
+    var bfrSize = bfr.byteLength + 2;
+    var payloadType = 0;
+    if (callbackId !== null) {
+      payloadType = PayloadTypes.cb;
+      bfrSize += callbackId.byteLength;
+    }
+
+    var payload = new ArrayBuffer(bfrSize);
+    var view = new Uint8Array(payload);
+
+    view[0] = payloadType;
+
+    view.set(new Uint8Array(callbackId), 2);
+    view.set(new Uint8Array(bfr), 10);
+    return view.buffer;
+  }
+
   Connection.addEventListener('datachannel', function(e) {
     DataChannel = e.channel;
     regChannelEvents(e.channel);
@@ -276,13 +350,17 @@ function SimpleRTCData(inServers, inConstraints) {
       return false;
     }
 
-    var callbackId = '';
+    var callbackId = null;
 
     if (typeof (callback) === 'function') {
-      // include callback id with sent data
-      callbackId = genSendCallbackID();
-
-      SendCBList[callbackId] = callback;
+      if ((typeof (data) === 'object') && (data instanceof ArrayBuffer)) {
+        callbackId = genSendCallbackID(true);
+        SendCBList[typedArrToHex(new Uint8Array(callbackId))] = callback;
+      }
+      else {
+        callbackId = genSendCallbackID();
+        SendCBList[callbackId] = callback;
+      }
     }
 
     var payload = data;
@@ -296,7 +374,12 @@ function SimpleRTCData(inServers, inConstraints) {
       cbSupported = true;
     }
 
-    if (callbackId && cbSupported) {
+    if ((typeof (data) === 'object') && (data instanceof ArrayBuffer)) {
+      payload = addHeaderToBuffer(data, callbackId);
+    }
+
+
+    if ((callbackId && cbSupported) && (typeof (data) === 'string')) {
       payload.cb = callbackId;
     }
 
@@ -395,12 +478,12 @@ function SimpleRTCData(inServers, inConstraints) {
 
   this.setAnswer = function(answer, callback) {
     callback = callback || function(detail) {
-      if(detail.error) {
+      if (detail.error) {
         throw new Error(detail.error);
       }
     };
 
-    var didCallback = false;
+    var didCallback = false, channelIsOpen = false;
 
     function doCallback(err) {
       err = err || null;
@@ -408,12 +491,16 @@ function SimpleRTCData(inServers, inConstraints) {
         return true;
       }
 
+      if (!err && !channelIsOpen) {
+        return true;
+      }
+
       didCallback = true;
 
       Connection.removeEventListener('iceconnectionstatechange', checkAnswerReady);
 
-      if(err) {
-        err = "SimpleRTCData.setAnswer Failed: " + err;
+      if (err) {
+        err = 'SimpleRTCData.setAnswer Failed: ' + err;
       }
 
       callback({
@@ -439,7 +526,7 @@ function SimpleRTCData(inServers, inConstraints) {
         answer = JSON.parse(answer);
       }
       catch (e) {
-        doCallback("Malformed Answer Supplied");
+        doCallback('Malformed Answer Supplied');
         return false;
       }
     }
@@ -448,12 +535,16 @@ function SimpleRTCData(inServers, inConstraints) {
       return false;
     }
 
-    if(answer.sdp && answer.sdp.type === "offer") {
-      doCallback("Expected Argument 1 to be `Answer` but got an `Offer` instead.");
+    if (answer.sdp && answer.sdp.type === 'offer') {
+      doCallback('Expected Argument 1 to be `Answer` but got an `Offer` instead.');
       return false;
     }
 
     Connection.addEventListener('iceconnectionstatechange', checkAnswerReady);
+    DataChannel.addEventListener('open', function() {
+      channelIsOpen = true;
+      doCallback();
+    });
 
     var remoteSDP = new SessionDescription(answer.sdp);
     Connection.setRemoteDescription(remoteSDP, function() {
