@@ -327,8 +327,14 @@ function SimpleRTCData(inServers, inConstraints) {
 
     view[0] = payloadType;
 
-    view.set(new Uint8Array(callbackId), 2);
-    view.set(new Uint8Array(bfr), 10);
+    if (callbackId !== null) {
+      view.set(new Uint8Array(callbackId), 2);
+      view.set(new Uint8Array(bfr), 10);
+    }
+    else {
+      view.set(new Uint8Array(bfr), 2);
+    }
+    
     return view.buffer;
   }
 
