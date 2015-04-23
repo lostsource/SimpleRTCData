@@ -161,7 +161,7 @@ function SimpleRTCData(inServers, inConstraints) {
               return;
             }
           }
-          catch (e) {}
+          catch (err) {}
         }
       }
 
@@ -189,11 +189,11 @@ function SimpleRTCData(inServers, inConstraints) {
   }
 
   function processPayload(payload, callback) {
-    if(payload instanceof Blob) {
+    if (payload instanceof Blob) {
 
       var fileReader = new FileReader();
       fileReader.onload = function() {
-          callback(this.result);
+        callback(this.result);
       };
       fileReader.readAsArrayBuffer(payload);
 
@@ -334,7 +334,7 @@ function SimpleRTCData(inServers, inConstraints) {
     else {
       view.set(new Uint8Array(bfr), 2);
     }
-    
+
     return view.buffer;
   }
 
@@ -352,7 +352,7 @@ function SimpleRTCData(inServers, inConstraints) {
   };
 
   function isTypedArray(data) {
-    if (typeof (data.buffer) !== "undefined") {
+    if (typeof (data.buffer) !== 'undefined') {
       // TODO , can better check for typed array ?
       return true;
     }
@@ -365,50 +365,41 @@ function SimpleRTCData(inServers, inConstraints) {
       return false;
     }
 
-    var callbackId = null;
+    var callbackId = null, payload = data;
 
-    if (typeof (callback) === 'function') {
-      if ((typeof (data) === 'object') && ((data instanceof ArrayBuffer) || isTypedArray(data))) {
-        callbackId = genSendCallbackID(true);
-        SendCBList[typedArrToHex(new Uint8Array(callbackId))] = callback;
-      }
-      else {
-        callbackId = genSendCallbackID();
-        SendCBList[callbackId] = callback;
-      }
-    }
+    switch (typeof (data)) {
+      case 'string':
+        payload = {
+          data: data
+        };
 
-    var payload = data;
-    var cbSupported = false;
+        // callback required
+        if (typeof (callback) === 'function') {
+          callbackId = genSendCallbackID();
+          SendCBList[callbackId] = callback;
+          payload.cb = callbackId;
+        }
 
-    if (typeof (data) === 'string') {
-      payload = {
-        data: data
-      };
+        // strings are always wrapped as JSON
+        payload = JSON.stringify(payload);
+        break;
 
-      cbSupported = true;
-    }
+      case 'object':
+        if (typeof (callback) === 'function') {
+          callbackId = genSendCallbackID(true);
+          SendCBList[typedArrToHex(new Uint8Array(callbackId))] = callback;
+        }
 
-
-    if (typeof (data) === 'object') {
-      if(data instanceof ArrayBuffer) {
-        payload = addHeaderToBuffer(data, callbackId);
-      }
-      else {
-        // typed array ?
-        if(isTypedArray(data)) {
+        if (data instanceof ArrayBuffer) {
+          payload = addHeaderToBuffer(data, callbackId);
+        }
+        else if (isTypedArray(data)) {
           payload = addHeaderToBuffer(data.buffer, callbackId);
         }
-      }
-    }
-
-    if ((callbackId && cbSupported) && (typeof (data) === 'string')) {
-      payload.cb = callbackId;
-    }
-
-    if (typeof (data) === 'string') {
-      // strings are always wrapped as JSON
-      payload = JSON.stringify(payload);
+        else if (callbackId) {
+          throw new Error('Callbacks not supported for type `' + data.constructor.name + '`');
+        }
+        break;
     }
 
     DataChannel.send(payload);
@@ -520,7 +511,10 @@ function SimpleRTCData(inServers, inConstraints) {
 
       didCallback = true;
 
-      Connection.removeEventListener('iceconnectionstatechange', checkAnswerReady);
+      Connection.removeEventListener(
+          'iceconnectionstatechange', 
+          checkAnswerReady
+      );
 
       if (err) {
         err = 'SimpleRTCData.setAnswer Failed: ' + err;
