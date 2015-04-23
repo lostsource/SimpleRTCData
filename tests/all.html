@@ -316,8 +316,6 @@
 	}
 
 	var testView = new Uint32Array(testBuffer);
-	console.log(testView);
-
 	window.addEventListener('load', function() {
 		var resElm = document.getElementById('res7');
 		resElm.innerHTML = "Pending";
@@ -329,10 +327,17 @@
 			Peer2.getAnswer(offer, function(answer) {
 				Peer1.setAnswer(answer, function() {
 
-					Peer2.on('data', function(view32) {
-						
-						for(var x = 0; x < view32.length; x++) {
-							if(view[x] !== testView[x]) {
+					Peer2.on('data', function(gotBuffer) {
+						if(gotBuffer.byteLength !== testBuffer.byteLength) {
+							resElm.innerHTML = "FAILED";
+							resElm.className = "failed";
+							return false;							
+						}
+
+						var view8 = new Uint8Array(gotBuffer);
+
+						for(var x = 0; x < view8.length; x++) {
+							if(view8[x] !== tmpView[x]) {
 								resElm.innerHTML = "FAILED";
 								resElm.className = "failed";
 								return false;
@@ -381,10 +386,17 @@
 			Peer2.getAnswer(offer, function(answer) {
 				Peer1.setAnswer(answer, function() {
 
-					Peer2.on('data', function(view32) {
-						
-						for(var x = 0; x < view32.length; x++) {
-							if(view[x] !== testView[x]) {
+					Peer2.on('data', function(gotBuffer) {
+						if(gotBuffer.byteLength !== testBuffer.byteLength) {
+							resElm.innerHTML = "FAILED";
+							resElm.className = "failed";
+							return false;							
+						}
+
+						var view8 = new Uint8Array(gotBuffer);
+
+						for(var x = 0; x < view8.length; x++) {
+							if(view8[x] !== tmpView[x]) {
 								resElm.innerHTML = "FAILED";
 								resElm.className = "failed";
 								return false;
@@ -406,7 +418,6 @@
 
 	});
 }());
-
 </script>
 
 </body>
