@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<script type='text/javascript' src='../SimpleRTCData.js'></script>
+	<title>SimpleRTCData - Browser to Browser Messaging Simplified</title>
+	<style type='text/css'>
+		body {
+			font-family:sans-serif;
+		}
+
+		h4 {
+			border-bottom:1px solid #aaaaaa;
+			padding:5px;
+			font-weight: normal;
+		}
+
+		span {
+			font-weight: bold;
+			display: block;
+		}
+
+		span.success {
+			color:green;
+		}
+
+		span.result {
+			color:rgb(176, 22, 110);
+		}
+
+		span.failed {
+			color:red;
+		}		
+	</style>
+</head>
+<body>
+<h2>SimpleRTCData - Basic Tests</h2>
+<h4>Connection with no callback in setAnswer</h4>
+<span class='result' id='res1'></span>
+<script type='text/javascript'>
+
+(function(){
+	window.addEventListener('load', function() {
+
+		var peer1connected = false, peer2connected = false;
+		var resElm = document.getElementById('res1');
+		resElm.innerHTML = "Pending";	
+
+		function checkState() {
+			if(peer1connected && peer2connected) {
+				resElm.innerHTML = "OK";
+				resElm.className = 'success';
+			}
+			else {
+				resElm.innerHTML = "Pending";	
+			}
+		}
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.on('connect', function() {
+			peer1connected = true;
+			checkState();
+		})
+
+		Peer2.on('connect', function() {
+			peer2connected = true;
+			checkState();
+		})
+
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer);
+			});
+		})
+
+	});
+}());
+
+</script>
+
+
+<h4>Connection with setAnswer callback</h4>
+<span class='result' id='res2'></span>
+<script type='text/javascript'>
+
+(function(){
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res2');
+		resElm.innerHTML = "Pending";
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+					resElm.innerHTML = "OK";
+					resElm.className = 'success';
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
+<h4>Send String</h4>
+<span class='result' id='res3'></span>
+
+
+<script type='text/javascript'>
+
+(function(){
+	var testString = "If debugging is the process of removing software bugs, then programming must be the process of putting them in. デバッグソフトウェアのバグを除去するプロセスである場合、プログラミングは、それらを格納するプロセスでなければならない。";
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res3');
+		resElm.innerHTML = "Pending";
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+
+					Peer2.on('data', function(str) {
+						if(str === testString) {
+							resElm.innerHTML = "OK";
+							resElm.className = 'success';
+						}
+						else {
+							resElm.innerHTML = "FAILED";
+							resElm.className = 'failed';
+						}
+					})
+
+					Peer1.send(testString);
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
+<h4>Send String (with callback)</h4>
+<span class='result' id='res4'></span>
+<span class='result' id='res4_1'></span>
+
+<script type='text/javascript'>
+
+(function(){
+	var testString = "If debugging is the process of removing software bugs, then programming must be the process of putting them in. デバッグソフトウェアのバグを除去するプロセスである場合、プログラミングは、それらを格納するプロセスでなければならない。";
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res4');
+		resElm.innerHTML = "Pending";
+
+		var subResElm = document.getElementById('res4_1');
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+
+					Peer2.on('data', function(str) {
+						if(str === testString) {
+							resElm.innerHTML = "OK";
+							resElm.className = 'success';
+						}
+						else {
+							resElm.innerHTML = "FAILED";
+							resElm.className = 'failed';
+						}
+					})
+
+					subResElm.innerHTML = "Waiting for callback..";
+					Peer1.send(testString, function() {
+						subResElm.innerHTML = "Message Sent";
+						subResElm.className = "success";
+					});
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
+<h4>Send ArrayBuffer</h4>
+<span class='result' id='res5'></span>
+
+<script type='text/javascript'>
+
+(function(){
+	var testBuffer = new ArrayBuffer(1024);
+	var testView = new Uint8Array(testBuffer);
+
+	for(var x = 0; x < testView.length; x++) {
+		testView[x] = x % 255;
+	}
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res5');
+		resElm.innerHTML = "Pending";
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+
+					Peer2.on('data', function(bfr) {
+						var view = new Uint8Array(bfr);
+						for(var x = 0; x < view.length; x++) {
+							if(view[x] !== testView[x]) {
+								resElm.innerHTML = "FAILED";
+								resElm.className = "failed";
+								return false;
+							}
+						}
+
+						resElm.innerHTML = "OK";
+						resElm.className = "success";
+					})
+
+					Peer1.send(testBuffer);
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
+<h4>Send ArrayBuffer (with callback)</h4>
+<span class='result' id='res6'></span>
+<span class='result' id='res6_1'></span>
+
+
+<script type='text/javascript'>
+
+(function(){
+	var testBuffer = new ArrayBuffer(1024);
+	var testView = new Uint8Array(testBuffer);
+
+	for(var x = 0; x < testView.length; x++) {
+		testView[x] = x % 255;
+	}
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res6');
+		var subResElm = document.getElementById('res6_1');
+		resElm.innerHTML = "Pending";
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+
+					Peer2.on('data', function(bfr) {
+						var view = new Uint8Array(bfr);
+						for(var x = 0; x < view.length; x++) {
+							if(view[x] !== testView[x]) {
+								resElm.innerHTML = "FAILED";
+								resElm.className = "failed";
+								return false;
+							}
+						}
+
+						resElm.innerHTML = "OK";
+						resElm.className = "success";
+					})
+
+					subResElm.innerHTML = "Waiting for callback..";
+					Peer1.send(testBuffer, function() {
+						subResElm.innerHTML = "Buffer Sent";
+						subResElm.className = "success";
+					});
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
+
+<h4>Send TypedArray</h4>
+<span class='result' id='res7'></span>
+
+
+<script type='text/javascript'>
+
+(function(){
+	var testBuffer = new ArrayBuffer(1024);
+	var tmpView = new Uint8Array(testBuffer);
+
+	for(var x = 0; x < tmpView.length; x++) {
+		tmpView[x] = x % 255;
+	}
+
+	var testView = new Uint32Array(testBuffer);
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res7');
+		resElm.innerHTML = "Pending";
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+
+					Peer2.on('data', function(gotBuffer) {
+						if(gotBuffer.byteLength !== testBuffer.byteLength) {
+							resElm.innerHTML = "FAILED";
+							resElm.className = "failed";
+							return false;							
+						}
+
+						var view8 = new Uint8Array(gotBuffer);
+
+						for(var x = 0; x < view8.length; x++) {
+							if(view8[x] !== tmpView[x]) {
+								resElm.innerHTML = "FAILED";
+								resElm.className = "failed";
+								return false;
+							}
+						}
+
+						resElm.innerHTML = "OK";
+						resElm.className = "success";
+					})
+
+					Peer1.send(testView);
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
+<h4>Send TypedArray (with callback)</h4>
+<span class='result' id='res8'></span>
+<span class='result' id='res8_1'></span>
+
+
+<script type='text/javascript'>
+
+(function(){
+	var testBuffer = new ArrayBuffer(1024);
+	var tmpView = new Uint8Array(testBuffer);
+
+	for(var x = 0; x < tmpView.length; x++) {
+		tmpView[x] = x % 255;
+	}
+
+	var testView = new Uint32Array(testBuffer);
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res8');
+		var subResElm = document.getElementById('res8_1');
+		resElm.innerHTML = "Pending";
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+
+					Peer2.on('data', function(gotBuffer) {
+						if(gotBuffer.byteLength !== testBuffer.byteLength) {
+							resElm.innerHTML = "FAILED";
+							resElm.className = "failed";
+							return false;							
+						}
+
+						var view8 = new Uint8Array(gotBuffer);
+
+						for(var x = 0; x < view8.length; x++) {
+							if(view8[x] !== tmpView[x]) {
+								resElm.innerHTML = "FAILED";
+								resElm.className = "failed";
+								return false;
+							}
+						}
+
+						resElm.innerHTML = "OK";
+						resElm.className = "success";
+					})
+
+					subResElm.innerHTML = "Waiting for callback..";
+					Peer1.send(testView, function() {
+						subResElm.innerHTML = "Buffer Sent";
+						subResElm.className = "success";
+					});
+				});
+			});
+		})
+
+	});
+}());
+</script>
+
+</body>
