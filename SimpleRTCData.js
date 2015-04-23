@@ -351,6 +351,15 @@ function SimpleRTCData(inServers, inConstraints) {
     return DataChannel;
   };
 
+  function isTypedArray(data) {
+    if (typeof (data.buffer) !== "undefined") {
+      // TODO , can better check for typed array ?
+      return true;
+    }
+
+    return false;
+  }
+
   this.send = function(data, callback) {
     if (!DataChannel) {
       return false;
@@ -359,7 +368,7 @@ function SimpleRTCData(inServers, inConstraints) {
     var callbackId = null;
 
     if (typeof (callback) === 'function') {
-      if ((typeof (data) === 'object') && (data instanceof ArrayBuffer)) {
+      if ((typeof (data) === 'object') && ((data instanceof ArrayBuffer) || isTypedArray(data))) {
         callbackId = genSendCallbackID(true);
         SendCBList[typedArrToHex(new Uint8Array(callbackId))] = callback;
       }
@@ -380,10 +389,18 @@ function SimpleRTCData(inServers, inConstraints) {
       cbSupported = true;
     }
 
-    if ((typeof (data) === 'object') && (data instanceof ArrayBuffer)) {
-      payload = addHeaderToBuffer(data, callbackId);
-    }
 
+    if (typeof (data) === 'object') {
+      if(data instanceof ArrayBuffer) {
+        payload = addHeaderToBuffer(data, callbackId);
+      }
+      else {
+        // typed array ?
+        if(isTypedArray(data)) {
+          payload = addHeaderToBuffer(data.buffer, callbackId);
+        }
+      }
+    }
 
     if ((callbackId && cbSupported) && (typeof (data) === 'string')) {
       payload.cb = callbackId;
