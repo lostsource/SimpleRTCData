@@ -4,6 +4,7 @@
 function SimpleRTCData(inServers, inConstraints) {
   // set to 'offer' or 'answer' depending on call to getOffer or getAnswer
   var inMode = null;
+  var that = this;
 
   var PayloadTypes = {
     cb: 0x01
@@ -11,7 +12,6 @@ function SimpleRTCData(inServers, inConstraints) {
 
   // set to true when iceConnectionState is completed/connected
   var Connected = false;
-
   var PeerConnection = window.RTCPeerConnection ||
                        window.mozRTCPeerConnection ||
                        window.webkitRTCPeerConnection;
@@ -25,12 +25,21 @@ function SimpleRTCData(inServers, inConstraints) {
                      window.RTCIceCandidate;
 
   var DataChannel = null;
-
   var SendCBList = [];
+  var LENGTH_CBID = 8; // length of callback id
 
-  var that = this;
+  // list of events to be forwarded to SimpleRTCData.on handlers
+  var LibEvList = ['data', 'error', 'connect', 'disconnect'];
 
-  var LENGTH_CBID = 8;
+  // list of events to be forwarded to SimpleRTCData.onChannelEvent handlers
+  var ChanEvList = ['open', 'close', 'error', 'message'];
+
+  // list of events to be forwarded to SimpleRTCData.onConnectionEvent handlers
+  var ConnEvList = ['addstream', 'datachannel', 'icecandidate',
+                    'iceconnectionstatechange', 'identityresult',
+                    'idpassertionerror', 'idpvalidationerror',
+                    'negotiationneeded', 'peeridentity',
+                    'remotestream', 'signalingstatechange'];
 
   function getRTCConnection() {
     var servers = inServers || {'iceServers': [
@@ -95,24 +104,45 @@ function SimpleRTCData(inServers, inConstraints) {
     }
   });
 
-  // list of events to be forwarded to SimpleRTCData.on handlers
-  var LibEvList = ['data', 'error', 'connect', 'disconnect'];
-
-  // list of events to be forwarded to SimpleRTCData.onChannelEvent handlers
-  var ChanEvList = ['open', 'close', 'error', 'message'];
-
-  // list of events to be forwarded to SimpleRTCData.onConnectionEvent handlers
-  var ConnEvList = ['addstream', 'datachannel', 'icecandidate',
-                    'iceconnectionstatechange', 'identityresult',
-                    'idpassertionerror', 'idpvalidationerror',
-                    'negotiationneeded', 'peeridentity',
-                    'remotestream', 'signalingstatechange'];
-
   ConnEvList.forEach(function(evName) {
     Connection.addEventListener(evName, function(e) {
       forwardConnEvent.apply(this, [e]);
     });
   });
+
+  function getConnectionStats(statType, callback) {
+    var allowedTypes = ['local','remote'];
+    if(allowedTypes.indexOf(statType) === -1) {
+      throw new Error("Unsupported Stats Type ("+statType+")");
+    }
+
+    try {
+      Connection.getStats(function(stats) {
+        var results = stats.result();
+        var resultMap = {};
+
+        results.forEach(function(result) {
+          
+          resultMap[result.type] = resultMap[result.type] || [];
+
+          var names =  result[statType].names();
+
+          var resultVals = {};
+          names.forEach(function(name) {
+            var resValue = result[statType].stat(name);
+            resultVals[name] = resValue;
+          });
+
+          resultMap[result.type].push(resultVals);
+        });
+
+        callback(resultMap);
+      });    
+    }
+    catch(e) {
+      console.log(e);
+    }
+  }  
 
   function emitEvent(evName, evArgs) {
     if (typeof(LibEventHandlers[evName]) === 'undefined') {
@@ -347,6 +377,14 @@ function SimpleRTCData(inServers, inConstraints) {
     return Connection;
   };
 
+  this.getLocalStats = function(callback) {
+    return getConnectionStats('local', callback);
+  }
+
+  this.getRemoteStats = function(callback) {
+    return getConnectionStats('remote', callback);
+  }
+
   this.getDataChannel = function() {
     return DataChannel;
   };
@@ -512,7 +550,7 @@ function SimpleRTCData(inServers, inConstraints) {
       didCallback = true;
 
       Connection.removeEventListener(
-          'iceconnectionstatechange', 
+          'iceconnectionstatechange',
           checkAnswerReady
       );
 
