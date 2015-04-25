@@ -27,6 +27,8 @@ SimpleRTCData is a tiny JavaScript library which can be used to establish an RTC
 
 *You may want to go through these steps using this [online example](http://lostsource.github.io/SimpleRTCData/)*
 
+[![SimpleRTCData Signalling Example](http://i.imgur.com/jljAcGQ.png)](http://lostsource.github.io/SimpleRTCData/)
+
 ## Basic Usage
 
 Start by including the library in your markup,
