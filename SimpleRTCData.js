@@ -1,7 +1,7 @@
 /* global  window, console */
 'use strict';
 
-function SimpleRTCData(inServers, inConstraints) {
+function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
   // set to 'offer' or 'answer' depending on call to getOffer or getAnswer
   var inMode = null;
   var that = this;
@@ -459,7 +459,7 @@ function SimpleRTCData(inServers, inConstraints) {
     var iceList = [];
     var offerSDP = null;
 
-    DataChannel = Connection.createDataChannel('SimpleRTCDataChannel', {
+    DataChannel = Connection.createDataChannel('SimpleRTCDataChannel', inDataChanOpts || {
       reliable: true, ordered: true
     });
 
