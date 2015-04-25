@@ -9,6 +9,7 @@ SimpleRTCData is a tiny JavaScript library which can be used to establish an RTC
 	- [getConnection](#getconnection)
 	- [getDataChannel](#getdatachannel)
 	- [getOffer](#getoffer)
+	- [send](#send)
 	- [setAnswer](#setanswer)
 - [Events](#events)
   - [on('connect')](#onconnect)
@@ -85,6 +86,11 @@ Returns a reference to the session's [RTCDataChannel](https://developer.mozilla.
 *SimpleRTCData.getOffer(Function callback)*
 
 The *initiator* must call this method to retrieve the offer metadata which should be used by the *joiner* as the first argument for the `getAnswer` method. The callback function gets one argument `(String offer)`.
+
+### send
+*SimpleRTCData.send(DOMString | ArrayBuffer message, [Function callback])*
+
+Sends `message` of type *DOMString* or *ArrayBuffer* to peer. An optional callback can be passed as a second argument which will be triggered upon receive confirmation from remote peer. Messages sent before a [connection is established](#onconnect) are discarded.
 
 ### setAnswer
 *SimpleRTCData.setAnswer(String answer, [Function callback])*
