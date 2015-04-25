@@ -6,6 +6,12 @@ window.addEventListener('load', function() {
 	var leftTitle = document.getElementById('titleCont');
 	var sloganCont = document.getElementById('sloganCont');
 	var summaryElm = document.getElementById('summary');
+	var browserSupported = true;
+
+	if(!SimpleRTCData().isSupported()) {
+		document.getElementById('browserNotSupported').style.display = "block";
+		browserSupported = false;
+	}
 
 	function updateHeaderPosition(force) {
 		if((sloganCont.style.position === "fixed") || (force)) {
@@ -160,6 +166,12 @@ window.addEventListener('load', function() {
 	elmErnieAnswerHolder.value = '';
 	elmOfferResult.value = '';
 
+	if(!browserSupported) {
+		elmCreateOffer.disabled = true;
+		elmErnieOfferHolder.disabled = true;
+		elmBertWindow.classList.add("inactive");
+		elmErnieWindow.classList.add("inactive");
+	}
 
 	elmBertMsgNpt.addEventListener('keydown',function(e){
 		if(e.keyCode === 13) {

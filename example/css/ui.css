@@ -75,7 +75,7 @@ font-size: 1.3em;
   font-weight: normal;
 }
 
-#summary {
+.description {
   width: 960px;
   margin: 10px auto;
   font-family: 'Titillium Web', sans-serif;
@@ -85,13 +85,13 @@ font-size: 1.3em;
   margin-top: 15px;
 }
 
-#summary a {
+.description a {
 	font-weight:bold;
 	text-decoration: none;
 	color:#4d4d4d;
 }
 
-#summary a:hover {
+.description a:hover {
 	color:#A8763E;
 }
 
@@ -99,6 +99,12 @@ font-size: 1.3em;
 	float:left;
 	height:150px;
 	
+}
+
+
+#browserNotSupported {
+	display:none;
+	color:rgb(210, 28, 28);
 }
 
 #bertWindow.waitingForAnswer {
