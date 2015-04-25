@@ -4,6 +4,7 @@ SimpleRTCData is a tiny JavaScript library which can be used to establish an RTC
 
 - [How it works](#how-it-works)
 - [Basic Usage](#basic-usage)
+- [Constructor](#constructor)
 - [Methods](#methods)
 	- [getAnswer](#getanswer)
 	- [getConnection](#getconnection)
@@ -64,6 +65,11 @@ At last send `erniesAnswer` to Bert so he can use it to call his `setAnswer` met
      
     BertRTC.setAnswer(erniesAnswer);
 
+## Constructor
+*SimpleRTCData([RTCConfiguration], [MediaConstraints], [RTCDataChannelInit])*
+
+Creating a `SimpleRTCData` instance does not require any arguments. However it is possible to customize options for the underlying `RTCPeerConnection` and `RTCDataChannel` by passing standard [RTCConfiguration](https://developer.mozilla.org/en-US/docs/Web/API/RTCConfiguration), [MediaConstraints](https://www.webrtc-experiment.com/docs/WebRTC-PeerConnection.html) and [RTCDataChannelInit](http://html5index.org/WebRTC%20-%20RTCDataChannelInit.html) options.
+
 ## Methods
 
 ### getAnswer
@@ -90,7 +96,7 @@ The *initiator* must call this method to retrieve the offer metadata which shoul
 ### send
 *SimpleRTCData.send(DOMString | ArrayBuffer message, [Function callback])*
 
-Sends `message` of type *DOMString* or *ArrayBuffer* to peer. An optional callback can be passed as a second argument which will be triggered upon receive confirmation from remote peer. Messages sent before a [connection is established](#onconnect) are discarded.
+Sends `message` of type *DOMString* or *ArrayBuffer* to peer. An optional callback can be passed as a second argument which will be triggered upon receipt of confirmation from the remote peer. Note: Messages sent before a [connection is established](#onconnect) are discarded.
 
 ### setAnswer
 *SimpleRTCData.setAnswer(String answer, [Function callback])*
