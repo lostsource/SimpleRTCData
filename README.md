@@ -1,4 +1,4 @@
-# SimpleRTCData
+# ![SimpleRTCData](http://i.imgur.com/BQpkqkE.png)
 
 SimpleRTCData is a tiny JavaScript library which can be used to establish an RTCDataChannel between two peers. It does not handle relaying of messages during connection setup so a separate signalling mechanism is required.
 
