@@ -7,8 +7,10 @@
 	<link href='css/ui.css' rel='stylesheet' type='text/css'/>
 	<script type='text/javascript' src='SimpleRTCData.js'></script>
 	<script type='text/javascript' src='js/ui.js'></script>
-	<link href='https://fonts.googleapis.com/css?family=Rancho' rel='stylesheet' type='text/css'>
-	<link href='http://fonts.googleapis.com/css?family=Titillium+Web' rel='stylesheet' type='text/css'>
+	<link href='//fonts.googleapis.com/css?family=Rancho' rel='stylesheet' type='text/css'>
+	<link href='//fonts.googleapis.com/css?family=Titillium+Web' rel='stylesheet' type='text/css'>
+	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+	<link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
 <h1 id='libTitle' style='text-align:center; margin-bottom:0;'>SimpleRTCData</h1>
@@ -17,7 +19,8 @@
 	<div id='smallTitle'>SimpleRTCData</div>
 </div><span id='slogan'>browser-to-browser messaging simplified</span></h2>
 
-<p id='summary'><a href='https://github.com/lostsource/SimpleRTCData'>SimpleRTCData</a> is a tiny <a href='https://github.com/lostsource/SimpleRTCData'>open source</a> JavaScript library which can be used to establish a standard <a href='https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel'>RTCDataChannel</a> between two peers. It does not handle relaying of messages during connection setup so a separate signalling mechanism is required. <a href='https://github.com/lostsource/SimpleRTCData#basic-usage'>Documentation</a> is available on GitHub and an example where you can use copy+paste to simulate the initial signalling message exchange is available below.</p>
+<p id='summary' class='description'><a href='https://github.com/lostsource/SimpleRTCData'>SimpleRTCData</a> is a tiny <a href='https://github.com/lostsource/SimpleRTCData'>open source</a> JavaScript library which can be used to establish a standard <a href='https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel'>RTCDataChannel</a> between two peers. It does not handle relaying of messages during connection setup so a separate signalling mechanism is required. <a href='https://github.com/lostsource/SimpleRTCData#basic-usage'>Documentation</a> is available on GitHub and an example where you can use copy+paste to simulate the initial signalling message exchange between two peers is available below. (you might also want to check the browser&apos;s <em>console</em> for more details)</p>
+<p id='browserNotSupported' class='description'>Unfortunately this browser does not yet support WebRTC, check back later or download one of the <a href='http://caniuse.com/#feat=rtcpeerconnection'>supported browsers</a>.</p>
 <div id='sessionClosed'>
 	<div id='reloadMsg'>Session Closed :( <a id='reloadLink' href='#'>Reload</a> ?</div>
 </div>
