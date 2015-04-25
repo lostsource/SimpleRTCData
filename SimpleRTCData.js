@@ -24,6 +24,21 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
                      window.webkitRTCIceCandidate ||
                      window.RTCIceCandidate;
 
+  if(!this) {
+    // called as function not as constructor
+
+    return {
+      isSupported: function() {
+        if(!PeerConnection || !SessionDescription || !IceCandidate) {
+          return false;
+        }
+        return true;
+      }
+    }
+
+
+  }
+
   var DataChannel = null;
   var SendCBList = [];
   var LENGTH_CBID = 8; // length of callback id
