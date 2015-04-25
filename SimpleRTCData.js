@@ -111,9 +111,9 @@ function SimpleRTCData(inServers, inConstraints) {
   });
 
   function getConnectionStats(statType, callback) {
-    var allowedTypes = ['local','remote'];
-    if(allowedTypes.indexOf(statType) === -1) {
-      throw new Error("Unsupported Stats Type ("+statType+")");
+    var allowedTypes = ['local', 'remote'];
+    if (allowedTypes.indexOf(statType) === -1) {
+      throw new Error('Unsupported Stats Type (' + statType + ')');
     }
 
     try {
@@ -122,10 +122,10 @@ function SimpleRTCData(inServers, inConstraints) {
         var resultMap = {};
 
         results.forEach(function(result) {
-          
+
           resultMap[result.type] = resultMap[result.type] || [];
 
-          var names =  result[statType].names();
+          var names = result[statType].names();
 
           var resultVals = {};
           names.forEach(function(name) {
@@ -137,12 +137,12 @@ function SimpleRTCData(inServers, inConstraints) {
         });
 
         callback(resultMap);
-      });    
+      });
     }
-    catch(e) {
+    catch (e) {
       console.log(e);
     }
-  }  
+  }
 
   function emitEvent(evName, evArgs) {
     if (typeof(LibEventHandlers[evName]) === 'undefined') {
@@ -379,11 +379,11 @@ function SimpleRTCData(inServers, inConstraints) {
 
   this.getLocalStats = function(callback) {
     return getConnectionStats('local', callback);
-  }
+  };
 
   this.getRemoteStats = function(callback) {
     return getConnectionStats('remote', callback);
-  }
+  };
 
   this.getDataChannel = function() {
     return DataChannel;
