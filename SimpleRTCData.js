@@ -434,6 +434,14 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     return false;
   }
 
+  this.close = function() {
+    if (!Connection || (Connection.iceConnectionState === 'closed')) {
+      return null;
+    }
+
+    Connection.close();
+  }
+
   this.send = function(data, callback) {
     if (!DataChannel) {
       return false;
