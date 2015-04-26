@@ -103,9 +103,14 @@ window.addEventListener('load', function() {
 
 	function handleSessionClose() {
 		var elm = document.getElementById('sessionClosed');
-		elm.style.width = window.screen.width+"px";		
+		elm.style.width = document.body.offsetWidth+"px";		
 		elm.style.height = window.screen.height+"px";		
 		elm.style.display = "block";
+
+		window.addEventListener('resize', function() {
+			elm.style.width = document.body.offsetWidth+"px";		
+			elm.style.height = window.screen.height+"px";		
+		});
 
 		document.getElementById('reloadLink').onclick = function() {
 			window.location.reload();
