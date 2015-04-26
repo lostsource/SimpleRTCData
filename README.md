@@ -26,9 +26,9 @@ SimpleRTCData is a tiny JavaScript library which can be used to establish an RTC
 2. Peer B calls `getAnswer` and sends the answer to Peer A
 3. Peer A calls `setAnswer` using the answer received from Peer B
 
-*You may want to go through these steps using this [online example](http://lostsource.github.io/SimpleRTCData/)*
+*You may want to go through these steps using this [online example](https://lostsource.github.io/SimpleRTCData/)*
 
-[![SimpleRTCData Signalling Example](http://i.imgur.com/jljAcGQ.png)](http://lostsource.github.io/SimpleRTCData/)
+[![SimpleRTCData Signalling Example](http://i.imgur.com/jljAcGQ.png)](https://lostsource.github.io/SimpleRTCData/)
 
 ## Basic Usage
 
