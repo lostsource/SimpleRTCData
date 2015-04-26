@@ -34,6 +34,8 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     cb: 0x01
   };
 
+  var SpawnMap = {};
+
   // set to true when iceConnectionState is completed/connected
   var Connected = false;
   var PeerConnection = window.RTCPeerConnection ||
@@ -65,7 +67,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
   var LENGTH_CBID = 8; // length of callback id
 
   // list of events to be forwarded to SimpleRTCData.on handlers
-  var LibEvList = ['data', 'error', 'connect', 'disconnect'];
+  var LibEvList = ['data', 'error', 'connect', 'disconnect', 'spawn'];
 
   // list of events to be forwarded to SimpleRTCData.onChannelEvent handlers
   var ChanEvList = ['open', 'close', 'error', 'message'];
@@ -250,6 +252,47 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
           SendCBList[payload.data]();
           delete SendCBList[payload.data];
         }
+        break;
+
+      case 'spawnOffer':
+        var spawnId = payload.data.id;
+
+        if (typeof(SpawnMap[spawnId]) !== 'undefined') {
+          throw new Error('Spawned instanced with this id (' + spawnId + ') already exists');
+        }
+
+        var spawnInstance = new that.constructor(inServers, inConstraints, inDataChanOpts);
+        spawnInstance.on('connect', function() {
+          emitEvent('spawn', [spawnId, spawnInstance]);
+        });
+
+        SpawnMap[spawnId] = {
+          instance: spawnInstance
+        };
+
+        spawnInstance.getAnswer(payload.data.offer, function(answer) {
+          DataChannel.send(JSON.stringify({
+            _internal: true,
+            type: 'spawnAnswer',
+            data: {
+              id: spawnId,
+              answer: answer
+            }
+          }));
+        });
+        break;
+
+      case 'spawnAnswer':
+        var spawnId = payload.data.id;
+
+        if (typeof(SpawnMap[spawnId]) === 'undefined') {
+          throw new Error('Spawned instanced with this id (' + spawnId + ') not found');
+        }
+
+        var spawnInstance = SpawnMap[spawnId].instance;
+        spawnInstance.setAnswer(payload.data.answer, function() {
+          SpawnMap[spawnId].callback(spawnInstance);
+        });
         break;
     }
   }
@@ -570,6 +613,43 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
       // TODO trigger event
       console.warn('fail');
     });
+  }
+
+
+  this.spawn = function(spawnId, callback) {
+    if (typeof(SpawnMap[spawnId]) !== 'undefined') {
+      throw new Error('Spawned instanced with this id (' + spawnId + ') already exists');
+    }
+
+    if (typeof(callback) !== 'function') {
+      throw new Error('Second argument to `spawn` must be a function');
+    }
+
+    if(!DataChannel) {
+      // TODO check data channel is connected
+      throw new Error('Connection must already be active before spawning separate instance');
+    }
+
+    // TODO check DataChannel exists
+
+    var spawnInstance = new this.constructor(inServers, inConstraints, inDataChanOpts);
+    SpawnMap[spawnId] = {
+      instance: spawnInstance,
+      callback: callback
+    };
+
+    spawnInstance.getOffer(function(offer) {
+      DataChannel.send(JSON.stringify({
+        _internal: true,
+        type: 'spawnOffer',
+        data: {
+          id: spawnId,
+          offer: offer
+        }
+      }));
+    });
+
+    console.log(SpawnMap);
   }
 
   this.setAnswer = function(answer, callback) {
