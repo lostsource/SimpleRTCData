@@ -6,6 +6,7 @@ SimpleRTCData is a tiny JavaScript library which can be used to establish an RTC
 - [Basic Usage](#basic-usage)
 - [Constructor](#constructor)
 - [Methods](#methods)
+	- [close](#close)
 	- [getAnswer](#getanswer)
 	- [getConnection](#getconnection)
 	- [getDataChannel](#getdatachannel)
@@ -73,6 +74,11 @@ At last send `erniesAnswer` to Bert so he can use it to call his `setAnswer` met
 Creating a `SimpleRTCData` instance does not require any arguments. However it is possible to customize options for the underlying `RTCPeerConnection` and `RTCDataChannel` by passing standard [RTCConfiguration](https://developer.mozilla.org/en-US/docs/Web/API/RTCConfiguration), [MediaConstraints](https://www.webrtc-experiment.com/docs/WebRTC-PeerConnection.html) and [RTCDataChannelInit](http://html5index.org/WebRTC%20-%20RTCDataChannelInit.html) options.
 
 ## Methods
+
+### close
+*SimpleRTCData.close(void)*
+
+Closes the current connection. The [`disconnect`](#ondisconnect) event will be triggered on both local and remote peers.
 
 ### getAnswer
 *SimpleRTCData.getAnswer(String offer, Function callback)*
