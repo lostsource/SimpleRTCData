@@ -64,6 +64,15 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
   var SendCBList = [];
   var LENGTH_CBID = 8; // length of callback id
 
+  var SendMessageID = 0;
+  var MessageData = {};
+  var CHUNK_SIZE = 1024*32; // 32k per chunk
+  var FLAG_FIRST_CHUNK = 0x01;
+  var FLAG_LAST_CHUNK = 0x02;
+
+  var DATA_TYPE_STRING = 0x01;
+  var DATA_TYPE_BUFFER = 0x02;
+
   // list of events to be forwarded to SimpleRTCData.on handlers
   var LibEvList = ['data', 'error', 'connect', 'disconnect'];
 
@@ -254,7 +263,49 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     }
   }
 
-  function processPayload(payload, callback) {
+  function processPayload(payloadChunk, callback) {
+    if(typeof(payloadChunk) === "string") {
+      callback(payloadChunk);
+      return false;
+    }
+
+    var payload;
+
+    var pView = new DataView(payloadChunk);
+
+    var msgId = pView.getUint32(0, true);
+    var msgSize = pView.getUint32(4, true);
+    var msgFlags = pView.getUint8(8, true);
+    var msgType = pView.getUint8(9, true);
+
+    if(msgFlags & FLAG_FIRST_CHUNK) {
+      MessageData[msgId] = {
+        offset:0,
+        view: new Uint8Array(new ArrayBuffer(msgSize))
+      }
+    }
+
+    var msgData = MessageData[msgId]; 
+    var chunkView8 = new Uint8Array(payloadChunk).subarray(10); // TODO replace with HeaderSize
+
+    if(msgFlags & FLAG_LAST_CHUNK) {
+      var dataOver = (msgData.offset+CHUNK_SIZE) - msgSize;
+      if(dataOver > 0) {
+        chunkView8 = chunkView8.subarray(0,(chunkView8.length-dataOver));
+      }
+    }
+
+    msgData.view.set(chunkView8, msgData.offset);
+    msgData.offset += CHUNK_SIZE;
+
+    if(msgFlags & FLAG_LAST_CHUNK) {
+      payload = msgData.view.buffer;
+    }
+    else {
+      // packet incomplete
+      return false;
+    }
+
     if (payload instanceof Blob) {
 
       var fileReader = new FileReader();
@@ -264,6 +315,12 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
       fileReader.readAsArrayBuffer(payload);
 
       return true;
+    }
+
+
+    if(msgType === DATA_TYPE_STRING) {
+      // convert to string
+      payload = ab2str(payload);
     }
 
     callback(payload);
@@ -434,6 +491,79 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     return false;
   }
 
+  function ab2str(buf) {
+    return String.fromCharCode.apply(null, new Uint16Array(buf));
+  }
+
+  function str2ab(str) {
+    var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
+    var bufView = new Uint16Array(buf);
+    for (var i=0, strLen=str.length; i < strLen; i++) {
+      bufView[i] = str.charCodeAt(i);
+    }
+    return buf;
+  }
+
+  function chunkAndSend(chan, data) {
+    var dataType = DATA_TYPE_STRING;
+    var dataLength = 0;
+
+    if((typeof(data) === "object") && (data instanceof ArrayBuffer)) {
+      dataType = DATA_TYPE_BUFFER;
+      dataLength = data.byteLength;
+    }
+    else if(typeof(data) === "string") {
+      data = str2ab(data);
+      dataLength = data.byteLength;
+    }
+    else {
+      throw new Error("Unsupported data type: " + typeof(data));
+    }
+
+    /*
+    *   0   Uint32  Message ID
+    *   4   Uint32  Message Size in Bytes
+    *   8   Uint8   Flags
+    *   9   Uint8   Data Type    
+    */
+
+    var HeaderSize = 10;
+
+    var totalChunks = Math.ceil(dataLength / CHUNK_SIZE);
+    
+    var chunkData = new ArrayBuffer(CHUNK_SIZE + HeaderSize);
+    var chunkView = new DataView(chunkData);
+    chunkView.setUint32(0, SendMessageID, true); 
+    chunkView.setUint32(4, dataLength, true);
+    
+    chunkView.setUint8(9, dataType);
+
+    var dataView8 = new Uint8Array(data);
+    var chunkView8 = new Uint8Array(chunkData);
+
+    for(var x = 0; x < totalChunks; x++) {
+      var chunkFlags = 0;
+      if(x === 0) {
+        chunkFlags |= FLAG_FIRST_CHUNK;
+      }
+
+      if(x === (totalChunks-1)) {
+        chunkFlags |= FLAG_LAST_CHUNK;
+      }
+
+      chunkView.setUint8(8, chunkFlags);
+
+      var dataReadStart = x*CHUNK_SIZE;
+      var dataReadStop = dataReadStart + CHUNK_SIZE;
+      if(dataReadStop > dataLength) {
+        dataReadStop = dataLength;
+      }
+
+      chunkView8.set(dataView8.subarray(dataReadStart, dataReadStop), HeaderSize);
+      chan.send(chunkData);
+    }
+  }
+
   this.close = function() {
     if (!Connection || (Connection.iceConnectionState === 'closed')) {
       return null;
@@ -448,6 +578,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     }
 
     var callbackId = null, payload = data;
+    SendMessageID++;
 
     switch (typeof (data)) {
       case 'string':
@@ -464,6 +595,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
 
         // strings are always wrapped as JSON
         payload = JSON.stringify(payload);
+
         break;
 
       case 'object':
@@ -484,7 +616,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
         break;
     }
 
-    DataChannel.send(payload);
+    chunkAndSend(DataChannel, payload);
   };
 
   this.getOffer = function(callback) {
