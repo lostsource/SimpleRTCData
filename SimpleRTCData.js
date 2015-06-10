@@ -264,7 +264,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
   }
 
   function processPayload(payloadChunk, callback) {
-    if(typeof(payloadChunk) === "string") {
+    if (typeof(payloadChunk) === 'string') {
       callback(payloadChunk);
       return false;
     }
@@ -278,27 +278,27 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     var msgFlags = pView.getUint8(8, true);
     var msgType = pView.getUint8(9, true);
 
-    if(msgFlags & FLAG_FIRST_CHUNK) {
+    if (msgFlags & FLAG_FIRST_CHUNK) {
       MessageData[msgId] = {
         offset:0,
         view: new Uint8Array(new ArrayBuffer(msgSize))
-      }
+      };
     }
 
     var msgData = MessageData[msgId]; 
     var chunkView8 = new Uint8Array(payloadChunk).subarray(10); // TODO replace with HeaderSize
 
-    if(msgFlags & FLAG_LAST_CHUNK) {
-      var dataOver = (msgData.offset+CHUNK_SIZE) - msgSize;
-      if(dataOver > 0) {
-        chunkView8 = chunkView8.subarray(0,(chunkView8.length-dataOver));
+    if (msgFlags & FLAG_LAST_CHUNK) {
+      var dataOver = (msgData.offset + CHUNK_SIZE) - msgSize;
+      if (dataOver > 0) {
+        chunkView8 = chunkView8.subarray(0, (chunkView8.length - dataOver));
       }
     }
 
     msgData.view.set(chunkView8, msgData.offset);
     msgData.offset += CHUNK_SIZE;
 
-    if(msgFlags & FLAG_LAST_CHUNK) {
+    if (msgFlags & FLAG_LAST_CHUNK) {
       payload = msgData.view.buffer;
     }
     else {
@@ -306,6 +306,8 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
       return false;
     }
 
+    // packet complete, process
+    // TODO can payload ever be a Blob here? (since chunking)
     if (payload instanceof Blob) {
 
       var fileReader = new FileReader();
@@ -318,7 +320,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     }
 
 
-    if(msgType === DATA_TYPE_STRING) {
+    if (msgType === DATA_TYPE_STRING) {
       // convert to string
       payload = ab2str(payload);
     }
@@ -508,16 +510,16 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     var dataType = DATA_TYPE_STRING;
     var dataLength = 0;
 
-    if((typeof(data) === "object") && (data instanceof ArrayBuffer)) {
+    if ((typeof(data) === 'object') && (data instanceof ArrayBuffer)) {
       dataType = DATA_TYPE_BUFFER;
       dataLength = data.byteLength;
     }
-    else if(typeof(data) === "string") {
+    else if (typeof(data) === 'string') {
       data = str2ab(data);
       dataLength = data.byteLength;
     }
     else {
-      throw new Error("Unsupported data type: " + typeof(data));
+      throw new Error('Unsupported data type: ' + typeof(data));
     }
 
     /*
@@ -543,19 +545,19 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
 
     for(var x = 0; x < totalChunks; x++) {
       var chunkFlags = 0;
-      if(x === 0) {
+      if (x === 0) {
         chunkFlags |= FLAG_FIRST_CHUNK;
       }
 
-      if(x === (totalChunks-1)) {
+      if (x === (totalChunks - 1)) {
         chunkFlags |= FLAG_LAST_CHUNK;
       }
 
       chunkView.setUint8(8, chunkFlags);
 
-      var dataReadStart = x*CHUNK_SIZE;
+      var dataReadStart = x * CHUNK_SIZE;
       var dataReadStop = dataReadStart + CHUNK_SIZE;
-      if(dataReadStop > dataLength) {
+      if (dataReadStop > dataLength) {
         dataReadStop = dataLength;
       }
 
@@ -570,8 +572,9 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     }
 
     Connection.close();
-  }
+  };
 
+  // TODO add support for object datatype (convert to json and back)
   this.send = function(data, callback) {
     if (!DataChannel) {
       return false;
@@ -595,7 +598,6 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
 
         // strings are always wrapped as JSON
         payload = JSON.stringify(payload);
-
         break;
 
       case 'object':
