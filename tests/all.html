@@ -420,4 +420,210 @@
 }());
 </script>
 
+<h4>Send Large ArrayBuffer</h4>
+<span class='result' id='res9'></span>
+<span class='result' id='res9_1'></span>
+
+
+<script type='text/javascript'>
+
+(function(){
+	var testBuffer = new ArrayBuffer((1024*1024));
+	var testView = new Uint8Array(testBuffer);
+
+	for(var x = 0; x < testView.length; x++) {
+		testView[x] = x % 255;
+	}
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res9');
+		var subResElm = document.getElementById('res9_1');
+		resElm.innerHTML = "Pending";
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+
+					Peer2.on('data', function(bfr) {
+						var view = new Uint8Array(bfr);
+
+						for(var x = 0; x < view.length; x++) {
+							if(view[x] !== testView[x]) {
+								resElm.innerHTML = "FAILED at index " + x + " " + view[x] + " vs " + testView[x];
+								resElm.className = "failed";
+								return false;
+							}
+						}
+
+						resElm.innerHTML = "OK";
+						resElm.className = "success";
+					})
+
+					Peer1.send(testBuffer);
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
+<h4>Send Large ArrayBuffer (with callback)</h4>
+<span class='result' id='res10'></span>
+<span class='result' id='res10_1'></span>
+
+
+<script type='text/javascript'>
+
+(function(){
+	var testBuffer = new ArrayBuffer((1024*1024));
+	var testView = new Uint8Array(testBuffer);
+
+	for(var x = 0; x < testView.length; x++) {
+		testView[x] = x % 255;
+	}
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res10');
+		var subResElm = document.getElementById('res10_1');
+		resElm.innerHTML = "Pending";
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+
+					Peer2.on('data', function(bfr) {
+						var view = new Uint8Array(bfr);
+
+						for(var x = 0; x < view.length; x++) {
+							if(view[x] !== testView[x]) {
+								resElm.innerHTML = "FAILED at index " + x + " " + view[x] + " vs " + testView[x];
+								resElm.className = "failed";
+								return false;
+							}
+						}
+
+						resElm.innerHTML = "OK";
+						resElm.className = "success";
+					})
+
+					subResElm.innerHTML = "Waiting for callback..";
+					Peer1.send(testBuffer, function() {
+						subResElm.innerHTML = "Buffer Sent";
+						subResElm.className = "success";
+					});
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
+<h4>Send Large String</h4>
+<span class='result' id='res12'></span>
+
+
+<script type='text/javascript'>
+
+(function(){
+	var testChunk = "If debugging is the process of removing software bugs, then programming must be the process of putting them in. デバッグソフトウェアのバグを除去するプロセスである場合、プログラミングは、それらを格納するプロセスでなければならない。";
+
+	var testString = "";
+	for(var x = 0; x < 1024; x++) {
+		testString += testChunk;
+	}
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res12');
+		resElm.innerHTML = "Pending";
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+
+					Peer2.on('data', function(str) {
+						if(str === testString) {
+							resElm.innerHTML = "OK";
+							resElm.className = 'success';
+						}
+						else {
+							resElm.innerHTML = "FAILED";
+							resElm.className = 'failed';
+						}
+					})
+
+					Peer1.send(testString);
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
+<h4>Send Large String (with callback)</h4>
+<span class='result' id='res11'></span>
+<span class='result' id='res11_1'></span>
+
+<script type='text/javascript'>
+
+(function(){
+	var testChunk = "If debugging is the process of removing software bugs, then programming must be the process of putting them in. デバッグソフトウェアのバグを除去するプロセスである場合、プログラミングは、それらを格納するプロセスでなければならない。";
+
+	var testString = "";
+	for(var x = 0; x < 1024; x++) {
+		testString += testChunk;
+	}
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res11');
+		resElm.innerHTML = "Pending";
+
+		var subResElm = document.getElementById('res11_1');
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+
+					Peer2.on('data', function(str) {
+						if(str === testString) {
+							resElm.innerHTML = "OK";
+							resElm.className = 'success';
+						}
+						else {
+							resElm.innerHTML = "FAILED";
+							resElm.className = 'failed';
+						}
+					})
+
+					subResElm.innerHTML = "Waiting for callback..";
+					Peer1.send(testString, function() {
+						subResElm.innerHTML = "Message Sent";
+						subResElm.className = "success";
+					});
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
 </body>
