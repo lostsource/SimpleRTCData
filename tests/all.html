@@ -428,7 +428,7 @@
 <script type='text/javascript'>
 
 (function(){
-	var testBuffer = new ArrayBuffer((1024*100));
+	var testBuffer = new ArrayBuffer((1024*1024));
 	var testView = new Uint8Array(testBuffer);
 
 	for(var x = 0; x < testView.length; x++) {
@@ -480,7 +480,7 @@
 <script type='text/javascript'>
 
 (function(){
-	var testBuffer = new ArrayBuffer((1024*100));
+	var testBuffer = new ArrayBuffer((1024*1024));
 	var testView = new Uint8Array(testBuffer);
 
 	for(var x = 0; x < testView.length; x++) {
@@ -538,7 +538,7 @@
 	var testChunk = "If debugging is the process of removing software bugs, then programming must be the process of putting them in. デバッグソフトウェアのバグを除去するプロセスである場合、プログラミングは、それらを格納するプロセスでなければならない。";
 
 	var testString = "";
-	for(var x = 0; x < 256; x++) {
+	for(var x = 0; x < 1024; x++) {
 		testString += testChunk;
 	}
 
@@ -584,7 +584,7 @@
 	var testChunk = "If debugging is the process of removing software bugs, then programming must be the process of putting them in. デバッグソフトウェアのバグを除去するプロセスである場合、プログラミングは、それらを格納するプロセスでなければならない。";
 
 	var testString = "";
-	for(var x = 0; x < 256; x++) {
+	for(var x = 0; x < 1024; x++) {
 		testString += testChunk;
 	}
 
