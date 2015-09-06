@@ -66,7 +66,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
 
   var SendMessageID = 0;
   var MessageData = {};
-  var CHUNK_SIZE = 1024*32; // 32k per chunk
+  var CHUNK_SIZE = 1024 * 32; // 32k per chunk
   var FLAG_FIRST_CHUNK = 0x01;
   var FLAG_LAST_CHUNK = 0x02;
 
@@ -292,13 +292,14 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
 
     if (msgFlags & FLAG_FIRST_CHUNK) {
       MessageData[msgId] = {
-        offset:0,
+        offset: 0,
         view: new Uint8Array(new ArrayBuffer(msgSize))
       };
     }
 
-    var msgData = MessageData[msgId]; 
-    var chunkView8 = new Uint8Array(payloadChunk).subarray(10); // TODO replace with HeaderSize
+    var msgData = MessageData[msgId];
+
+    var chunkView8 = new Uint8Array(payloadChunk).subarray(HeaderSize);
 
     if (msgFlags & FLAG_LAST_CHUNK) {
       var dataOver = (msgData.offset + CHUNK_SIZE) - msgSize;
@@ -510,9 +511,9 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
   }
 
   function str2ab(str) {
-    var buf = new ArrayBuffer(str.length*2); // 2 bytes for each char
+    var buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
     var bufView = new Uint16Array(buf);
-    for (var i=0, strLen=str.length; i < strLen; i++) {
+    for (var i = 0, strLen = str.length; i < strLen; i++) {
       bufView[i] = str.charCodeAt(i);
     }
     return buf;
@@ -538,24 +539,24 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     *   0   Uint32  Message ID
     *   4   Uint32  Message Size in Bytes
     *   8   Uint8   Flags
-    *   9   Uint8   Data Type    
+    *   9   Uint8   Data Type
     */
 
     var HeaderSize = 10;
 
     var totalChunks = Math.ceil(dataLength / CHUNK_SIZE);
-    
+
     var chunkData = new ArrayBuffer(CHUNK_SIZE + HeaderSize);
     var chunkView = new DataView(chunkData);
-    chunkView.setUint32(0, SendMessageID, true); 
+    chunkView.setUint32(0, SendMessageID, true);
     chunkView.setUint32(4, dataLength, true);
-    
+
     chunkView.setUint8(9, dataType);
 
     var dataView8 = new Uint8Array(data);
     var chunkView8 = new Uint8Array(chunkData);
 
-    for(var x = 0; x < totalChunks; x++) {
+    for (var x = 0; x < totalChunks; x++) {
       var chunkFlags = 0;
       if (x === 0) {
         chunkFlags |= FLAG_FIRST_CHUNK;
@@ -636,7 +637,9 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
           payload = addHeaderToBuffer(data.buffer, callbackId);
         }
         else if (callbackId) {
-          throw new Error('Callbacks not supported for type `' + data.constructor.name + '`');
+          throw new Error(
+              'Callbacks not supported for type `' + data.constructor.name + '`'
+          );
         }
         break;
     }
@@ -660,9 +663,11 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     var iceList = [];
     var offerSDP = null;
 
-    DataChannel = Connection.createDataChannel('SimpleRTCDataChannel', inDataChanOpts || {
-      reliable: true, ordered: true
-    });
+    DataChannel = Connection.createDataChannel('SimpleRTCDataChannel',
+        inDataChanOpts || {
+          reliable: true,
+          ordered: true
+        });
 
     regChannelEvents(DataChannel);
 
@@ -787,12 +792,17 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
       }
     }
     else {
-      doCallback('Expected `string` for Argument 1 (answer) got `' + typeof(answer) + '` instead');
+      doCallback(
+          'Expected `string` for Argument 1 (answer) got `' +
+          typeof(answer) + '` instead'
+      );
       return false;
     }
 
     if (answer.sdp && answer.sdp.type === 'offer') {
-      doCallback('Expected Argument 1 to be `Answer` but got an `Offer` instead.');
+      doCallback(
+          'Expected Argument 1 to be `Answer` but got an `Offer` instead.'
+      );
       return false;
     }
 
