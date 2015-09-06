@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/* global  window, console */
+/* global  window, console, unescape, escape */
 'use strict';
 
 function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
@@ -31,7 +31,13 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
   var that = this;
 
   var PayloadTypes = {
-    cb: 0x01
+    cb: 0x01,
+    rp: 0x02
+  };
+
+  var ReplyTypes = {
+    string: 0x01,
+    object: 0x02
   };
 
   // set to true when iceConnectionState is completed/connected
@@ -61,7 +67,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
   }
 
   var DataChannel = null;
-  var SendCBList = [];
+  var SendCBList = [], SendRPList = [];
   var LENGTH_CBID = 8; // length of callback id
 
   var SendMessageID = 0;
@@ -74,7 +80,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
   var DATA_TYPE_BUFFER = 0x02;
 
   // list of events to be forwarded to SimpleRTCData.on handlers
-  var LibEvList = ['data', 'error', 'connect', 'disconnect'];
+  var LibEvList = ['data', 'error', 'connect', 'disconnect', 'request'];
 
   // list of events to be forwarded to SimpleRTCData.onChannelEvent handlers
   var ChanEvList = ['open', 'close', 'error', 'message'];
@@ -119,7 +125,19 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     }
 
     return cbHash;
+  }
 
+  function hexToBuffer(hexStr) {
+    var bfr = new ArrayBuffer(hexStr.length / 2);
+    var view = new Uint8Array(bfr);
+
+    for (var x = 0; x < (hexStr.length / 2); x++) {
+
+      view[x] = parseInt(hexStr.substr(x * 2, 2), 16);
+
+    }
+
+    return bfr;
   }
 
   function genSendCallbackID(getAsBuffer) {
@@ -268,11 +286,51 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     switch (payload.type) {
       case 'cb':
         if (typeof (SendCBList[payload.data]) !== 'undefined') {
-          SendCBList[payload.data]();
+          SendCBList[payload.data]({});
           delete SendCBList[payload.data];
         }
         break;
+      case 'rq':
+        emitEvent('request', [{
+          id: payload.data.requestId,
+          sendReply: function(data) {
+            sendReply(payload.data.replyId, data);
+          }
+        }]);
+        break;
     }
+  }
+
+  function sendReply(replyId, data) {
+    var bfr = data;
+    var dataType = ReplyTypes.object;
+
+    if (typeof(data) === 'string') {
+      var encodedStr = unescape(encodeURIComponent(data));
+
+      bfr = new ArrayBuffer(encodedStr.length);
+      var bufView = new Uint8Array(bfr);
+
+      for (var i = 0, strLen = encodedStr.length; i < strLen; i++) {
+        bufView[i] = encodedStr.charCodeAt(i);
+      }
+
+      dataType = ReplyTypes.string;
+    }
+
+    // 3 bytes for header: payload type, data type, reserved byte
+    var bfrSize = bfr.byteLength + 3 + LENGTH_CBID;
+    var payloadType = PayloadTypes.rp;
+
+    var payload = new ArrayBuffer(bfrSize);
+    var view = new Uint8Array(payload);
+    view[0] = payloadType;
+    view[1] = dataType;
+
+    view.set(new Uint8Array(hexToBuffer(replyId)), 3);
+    view.set(new Uint8Array(bfr), 11);
+
+    chunkAndSend(DataChannel, payload);
   }
 
   function processPayload(payloadChunk, callback) {
@@ -352,7 +410,6 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     channel.addEventListener('message', function(e) {
       processPayload(e.data, function(payload) {
 
-
         if (typeof(payload) === 'string') {
           payload = JSON.parse(payload);
 
@@ -372,14 +429,20 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
           var dataStart = 2;
           var cbBfr = null, cbView = null;
 
-          if (payloadView[0] === PayloadTypes.cb) {
-            dataStart += LENGTH_CBID;
+          switch (payloadView[0]) {
+            case PayloadTypes.cb:
+              dataStart += LENGTH_CBID;
 
-            cbBfr = new ArrayBuffer(LENGTH_CBID);
-            cbView = new Uint8Array(cbBfr);
+              cbBfr = new ArrayBuffer(LENGTH_CBID);
+              cbView = new Uint8Array(cbBfr);
 
-            cbView.set(payloadView.subarray(2, LENGTH_CBID + 2));
+              cbView.set(payloadView.subarray(2, LENGTH_CBID + 2));
+              break;
+            case PayloadTypes.rp:
+              processReplyPayload(payload);
+              break;
           }
+
 
           var dataPayload = new ArrayBuffer(payload.byteLength - dataStart);
           var dataPayloadView = new Uint8Array(dataPayload);
@@ -399,6 +462,32 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     for (var x = 0; x < ChanEvList.length; x++) {
       regChannelEvent(channel, ChanEvList[x]);
     }
+  }
+
+  function processReplyPayload(bfr) {
+    var view = new Uint8Array(bfr);
+    var replyId = typedArrToHex(view.subarray(3, 3 + LENGTH_CBID));
+
+    switch (view[1]) { // reply data type
+      case ReplyTypes.string:
+        if (typeof(SendRPList[replyId]) === 'function') {
+          var str = '';
+          var subView = view.subarray(11);
+
+          for (var x = 0; x < subView.length; x++) {
+            str += String.fromCharCode(subView[x]);
+          }
+
+          var decodedStr = decodeURIComponent(escape(str));
+          SendRPList[replyId](decodedStr);
+        }
+        break;
+      case ReplyTypes.object:
+        SendRPList[replyId](view.subarray(11));
+        break;
+    }
+
+    delete SendRPList[replyId];
   }
 
   function callRemoteCallback(callbackId) {
@@ -506,8 +595,22 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     return false;
   }
 
-  function ab2str(buf) {
-    return String.fromCharCode.apply(null, new Uint16Array(buf));
+  function ab2str(buffer) {
+    var bufView = new Uint16Array(buffer);
+    var length = bufView.length;
+    var result = '';
+    var chunkSize = 0xFFFF;
+
+    for (var i = 0; i < length; i += chunkSize) {
+      var readTo = chunkSize;
+      if (i + chunkSize > length) {
+        readTo = length - i;
+      }
+
+      result += String.fromCharCode.apply(null, bufView.subarray(i, i + readTo));
+    }
+
+    return result;
   }
 
   function str2ab(str) {
@@ -598,6 +701,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     Connection.close();
   };
 
+
   // TODO add support for object datatype (convert to json and back)
   this.send = function(data, callback) {
     if (!DataChannel) {
@@ -645,6 +749,22 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     }
 
     chunkAndSend(DataChannel, payload);
+  };
+
+  this.request = function(requestId, replyCb) {
+    var replyCbId = genSendCallbackID();
+    SendRPList[replyCbId] = replyCb;
+
+    DataChannel.send(JSON.stringify({
+      _internal: true,
+      type: 'rq',
+      data: {
+        requestId: requestId,
+        replyId: replyCbId
+      }
+    }));
+
+    emitEvent('request', []);
   };
 
   this.getOffer = function(callback) {

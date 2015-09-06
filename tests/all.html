@@ -198,6 +198,52 @@
 
 </script>
 
+<h4>Send String (with request / reply)</h4>
+<span class='result' id='res16'></span> 
+<span class='result' id='res16_1'></span>
+
+<script type='text/javascript'>
+
+(function(){
+	var testString = "If debugging is the process of removing software bugs, then programming must be the process of putting them in. デバッグソフトウェアのバグを除去するプロセスである場合、プログラミングは、それらを格納するプロセスでなければならない。";
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res16');
+		resElm.innerHTML = "Pending";
+
+		var subResElm = document.getElementById('res16_1');
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+					subResElm.innerHTML = "Waiting for reply..";
+					Peer2.on('request', function(request) {
+						request.sendReply(testString);
+					});
+
+					Peer1.request("largestring", function(reply) {
+						if(reply === testString) {
+							resElm.innerHTML = "OK";
+							resElm.className = 'success';
+							subResElm.innerHTML = "";
+						}
+						else {
+							resElm.innerHTML = "FAILED";
+							resElm.className = 'failed';							
+						}
+					});
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
 <h4>Send String Before on('connect')</h4>
 <span class='result' id='res13'></span>
 
@@ -615,6 +661,67 @@
 
 </script>
 
+
+<h4>Send Large ArrayBuffer (request / reply)</h4>
+<span class='result' id='res17'></span>
+<span class='result' id='res17_1'></span>
+
+
+<script type='text/javascript'>
+
+(function(){
+	var testBuffer = new ArrayBuffer((1024*1024));
+	var testView = new Uint8Array(testBuffer);
+
+	for(var x = 0; x < testView.length; x++) {
+		testView[x] = x % 255;
+	}
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res17');
+		var subResElm = document.getElementById('res17_1');
+		resElm.innerHTML = "Pending";
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+
+					subResElm.innerHTML = "Waiting for reply..";
+					Peer2.on('request', function(request) {
+						if(request.id !== "largebuffer") {
+							return false;
+						}
+						request.sendReply(testBuffer);
+					});
+
+					Peer1.request("largebuffer", function(bfr) {
+						var view = new Uint8Array(bfr);
+
+						for(var x = 0; x < view.length; x++) {
+							if(view[x] !== testView[x]) {
+								resElm.innerHTML = "FAILED at index " + x + " " + view[x] + " vs " + testView[x];
+								resElm.className = "failed";
+								return false;
+							}
+						}
+
+						resElm.innerHTML = "OK";
+						resElm.className = "success";
+						subResElm.innerHTML = "";
+					});
+
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
 <h4>Send Large String</h4>
 <span class='result' id='res12'></span>
 
@@ -703,6 +810,61 @@
 					Peer1.send(testString, function() {
 						subResElm.innerHTML = "Message Sent";
 						subResElm.className = "success";
+					});
+				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
+
+<h4>Send Large String (with request / reply)</h4>
+<span class='result' id='res15'></span> 
+<span class='result' id='res15_1'></span>
+
+<script type='text/javascript'>
+
+(function(){
+	var testChunk = "If debugging is the process of removing software bugs, then programming must be the process of putting them in. デバッグソフトウェアのバグを除去するプロセスである場合、プログラミングは、それらを格納するプロセスでなければならない。";
+
+	var testString = "";
+	for(var x = 0; x < 1024; x++) {
+		testString += testChunk;
+	}
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res15');
+		resElm.innerHTML = "Pending";
+
+		var subResElm = document.getElementById('res15_1');
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer1.setAnswer(answer, function() {
+					subResElm.innerHTML = "Waiting for reply..";
+					Peer2.on('request', function(request) {
+						if(request.id !== "largestring") {
+							return false;
+						}
+						request.sendReply(testString);
+					});
+
+					Peer1.request("largestring", function(reply) {
+						if(reply === testString) {
+							resElm.innerHTML = "OK";
+							resElm.className = 'success';
+							subResElm.innerHTML = "";
+						}
+						else {
+							resElm.innerHTML = "FAILED";
+							resElm.className = 'failed';							
+						}
 					});
 				});
 			});
