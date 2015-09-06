@@ -299,7 +299,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
 
     var msgData = MessageData[msgId];
 
-    var chunkView8 = new Uint8Array(payloadChunk).subarray(HeaderSize);
+    var chunkView8 = new Uint8Array(payloadChunk).subarray(10);
 
     if (msgFlags & FLAG_LAST_CHUNK) {
       var dataOver = (msgData.offset + CHUNK_SIZE) - msgSize;
