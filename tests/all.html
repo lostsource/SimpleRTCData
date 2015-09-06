@@ -19,6 +19,7 @@
 		span {
 			font-weight: bold;
 			display: block;
+			padding-left:25px;
 		}
 
 		span.success {
@@ -189,6 +190,92 @@
 						subResElm.className = "success";
 					});
 				});
+			});
+		})
+
+	});
+}());
+
+</script>
+
+<h4>Send String Before on('connect')</h4>
+<span class='result' id='res13'></span>
+
+
+<script type='text/javascript'>
+
+(function(){
+	var testString = "If debugging is the process of removing software bugs, then programming must be the process of putting them in. デバッグソフトウェアのバグを除去するプロセスである場合、プログラミングは、それらを格納するプロセスでなければならない。";
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res13');
+		resElm.innerHTML = "Pending";
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer2.on('data', function(str) {
+					if(str === testString) {
+						resElm.innerHTML = "OK";
+						resElm.className = 'success';
+					}
+					else {
+						resElm.innerHTML = "FAILED";
+						resElm.className = 'failed';
+					}
+				})
+
+				Peer1.send(testString);
+
+				Peer1.setAnswer(answer);
+			});
+		})
+
+	});
+}());
+
+</script>
+
+<h4>Send String Before on('connect') (with callback)</h4>
+<span class='result' id='res14'></span>
+<span class='result' id='res14_1'></span>
+
+<script type='text/javascript'>
+
+(function(){
+	var testString = "If debugging is the process of removing software bugs, then programming must be the process of putting them in. デバッグソフトウェアのバグを除去するプロセスである場合、プログラミングは、それらを格納するプロセスでなければならない。";
+
+	window.addEventListener('load', function() {
+		var resElm = document.getElementById('res14');
+		resElm.innerHTML = "Pending";
+
+		var subResElm = document.getElementById('res14_1');
+
+		var Peer1 = new SimpleRTCData;
+		var Peer2 = new SimpleRTCData;
+
+		Peer1.getOffer(function(offer) {
+			Peer2.getAnswer(offer, function(answer) {
+				Peer2.on('data', function(str) {
+					if(str === testString) {
+						resElm.innerHTML = "OK";
+						resElm.className = 'success';
+					}
+					else {
+						resElm.innerHTML = "FAILED";
+						resElm.className = 'failed';
+					}
+				})
+
+				subResElm.innerHTML = "Waiting for callback..";
+				Peer1.send(testString, function() {
+					subResElm.innerHTML = "Message Sent";
+					subResElm.className = "success";
+				});
+								
+				Peer1.setAnswer(answer);
 			});
 		})
 

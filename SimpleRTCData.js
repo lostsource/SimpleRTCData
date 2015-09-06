@@ -86,6 +86,11 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
                     'negotiationneeded', 'peeridentity',
                     'remotestream', 'signalingstatechange'];
 
+  // holds list of messages which were attempted to be sent
+  // before connection RTCDataChannel was open
+  // this will be drained after a succesful connection
+  var preConnectSendQueue = [];
+
   function getRTCConnection() {
     var servers = inServers || {'iceServers': [
       {'url': 'stun:stun.l.google.com:19302'}
@@ -144,6 +149,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
         if (!Connected) {
           Connected = true;
           emitEvent('connect');
+          processPreConnectQueue();
         }
         break;
     }
@@ -154,6 +160,12 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
       forwardConnEvent.apply(this, [e]);
     });
   });
+
+  function processPreConnectQueue() {
+    while (preConnectSendQueue.length > 0) {
+      DataChannel.send(preConnectSendQueue.shift());
+    }
+  }
 
   function getConnectionStats(statType, callback) {
     var allowedTypes = ['local', 'remote'];
@@ -561,8 +573,19 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
         dataReadStop = dataLength;
       }
 
-      chunkView8.set(dataView8.subarray(dataReadStart, dataReadStop), HeaderSize);
-      chan.send(chunkData);
+      chunkView8.set(
+          dataView8.subarray(dataReadStart, dataReadStop),
+          HeaderSize
+      );
+
+      // make sure RTCDataChannel is connected (readyState = 'open')
+      if (Connected) {
+        chan.send(chunkData);
+      }
+      else {
+        // queue messages
+        preConnectSendQueue.push(chunkData);
+      }
     }
   }
 

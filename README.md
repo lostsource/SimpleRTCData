@@ -104,7 +104,7 @@ The *initiator* must call this method to retrieve the offer metadata which shoul
 ### send
 *SimpleRTCData.send(DOMString | ArrayBuffer message, [Function callback])*
 
-Sends `message` of type *DOMString* or *ArrayBuffer* to peer. An optional callback can be passed as a second argument which will be triggered upon receipt of confirmation from the remote peer. Note: Messages sent before a [connection is established](#onconnect) are discarded.
+Sends `message` of type *DOMString* or *ArrayBuffer* to peer. An optional callback can be passed as a second argument which will be triggered upon receipt of confirmation from the remote peer.
 
 ### setAnswer
 *SimpleRTCData.setAnswer(String answer, [Function callback])*
