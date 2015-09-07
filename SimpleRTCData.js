@@ -440,7 +440,8 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
               break;
             case PayloadTypes.rp:
               processReplyPayload(payload);
-              break;
+              // reply data should not be emitted as 'data'
+              return true;
           }
 
 
