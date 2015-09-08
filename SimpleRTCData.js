@@ -487,7 +487,11 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
         }
         break;
       case ReplyTypes.object:
-        SendRPList[replyId](view.subarray(11));
+        // create copy of buffer otherwise it
+        // will contain reply header when received by peer
+        var viewCopy = new Uint8Array(new ArrayBuffer(view.length - 11));
+        viewCopy.set(view.subarray(11));
+        SendRPList[replyId](viewCopy);
         break;
     }
 
