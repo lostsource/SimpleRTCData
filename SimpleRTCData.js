@@ -167,7 +167,6 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
         if (!Connected) {
           Connected = true;
           emitEvent('connect');
-          processPreConnectQueue();
         }
         break;
     }
@@ -400,6 +399,10 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
   }
 
   function regChannelEvents(channel) {
+    channel.addEventListener('open', function() {
+      processPreConnectQueue();
+    });
+
     channel.addEventListener('close', function() {
       if (Connected) {
         Connected = false;
@@ -491,8 +494,18 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     delete SendRPList[replyId];
   }
 
+  function sendToDataChannel(data) {
+    if (Connected && (DataChannel.readyState === 'open')) {
+      DataChannel.send(data);
+    }
+    else {
+      // queue messages
+      preConnectSendQueue.push(data);
+    }
+  }
+
   function callRemoteCallback(callbackId) {
-    DataChannel.send(JSON.stringify({
+    sendToDataChannel(JSON.stringify({
       _internal: true,
       type: 'cb',
       data: callbackId
@@ -684,13 +697,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
       );
 
       // make sure RTCDataChannel is connected (readyState = 'open')
-      if (Connected) {
-        chan.send(chunkData);
-      }
-      else {
-        // queue messages
-        preConnectSendQueue.push(chunkData);
-      }
+      sendToDataChannel(chunkData);
     }
   }
 
@@ -756,7 +763,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     var replyCbId = genSendCallbackID();
     SendRPList[replyCbId] = replyCb;
 
-    DataChannel.send(JSON.stringify({
+    sendToDataChannel(JSON.stringify({
       _internal: true,
       type: 'rq',
       data: {
