@@ -281,6 +281,18 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     return false;
   }
 
+  function getRequestInstance(requestId, replyId) {
+
+    function SimpleRTCDataRequest() {
+      this.id = requestId;
+      this.sendReply = function(data) {
+        sendReply(replyId, data);
+      }
+    }
+
+    return new SimpleRTCDataRequest();
+  }
+
   function processInternalPayload(payload) {
     switch (payload.type) {
       case 'cb':
@@ -290,12 +302,9 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
         }
         break;
       case 'rq':
-        emitEvent('request', [{
-          id: payload.data.requestId,
-          sendReply: function(data) {
-            sendReply(payload.data.replyId, data);
-          }
-        }]);
+        emitEvent('request', [
+          getRequestInstance(payload.data.requestId, payload.data.replyId)
+        ]);
         break;
     }
   }
@@ -775,8 +784,6 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
         replyId: replyCbId
       }
     }));
-
-    emitEvent('request', []);
   };
 
   this.getOffer = function(callback) {
