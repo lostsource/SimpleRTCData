@@ -11,12 +11,14 @@ SimpleRTCData is a tiny JavaScript library which can be used to establish an RTC
 	- [getConnection](#getconnection)
 	- [getDataChannel](#getdatachannel)
 	- [getOffer](#getoffer)
+	- [request](#request)
 	- [send](#send)
 	- [setAnswer](#setanswer)
 - [Events](#events)
   - [on('connect')](#onconnect)
   - [on('data')](#ondata)
   - [on('disconnect')](#ondisconnect)
+  - [on('request')](#onrequest)
   - [onChannelEvent](#onchannelevent)
   - [onConnectionEvent](#onconnectionevent)
 
@@ -101,6 +103,11 @@ Returns a reference to the session's [RTCDataChannel](https://developer.mozilla.
 
 The *initiator* must call this method to retrieve the offer metadata which should be used by the *joiner* as the first argument for the `getAnswer` method. The callback function gets one argument `(String offer)`.
 
+### request
+*SimpleRTCData.request(String requestId, Function callback)*
+
+Requests data from peer triggering the [request event](#onrequest) on the remote peer. Data sent by the peer will be passed to the callback function.
+
 ### send
 *SimpleRTCData.send(DOMString | ArrayBuffer message, [Function callback])*
 
@@ -128,6 +135,11 @@ Emitted when a message event is received on the [RTCDataChannel](https://develop
 *SimpleRTCData.on('disconnect', Function callback)*
 
 Emitted when [RTCPeerConnection.iceConnectionState](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/iceConnectionState) has a value of `disconnected` or the [RTCDataChannel.onclose](https://developer.mozilla.org/en-US/docs/Web/API/RTCDataChannel/onclose) event is triggered.
+
+### on('request')
+*SimpleRTCData.on('request', Object SimpleRTCDataRequest)*
+
+Emitted when the remote peer calls the [request] method. The callback contains a SimpleRTCDataRequest object which can be used to send a reply to the requesting peer.
 
 ### onChannelEvent
 *SimpleRTCData.onChannelEvent(String eventType, Function callback)*
