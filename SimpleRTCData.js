@@ -165,8 +165,11 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
       case 'completed':
       case 'connected':
         if (!Connected) {
+          // note, when in offer mode connect event is emitted when peer is ready to receive
+          if(inMode !== 'offer') {
           Connected = true;
           emitEvent('connect');
+        }
         }
         break;
     }
@@ -295,6 +298,14 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
 
   function processInternalPayload(payload) {
     switch (payload.type) {
+      case 'ev':
+        if(payload.data === 'readyToReceive' && !Connected) {
+          Connected = true;
+          emitEvent('connect');
+          processPreConnectQueue();
+        }
+
+        break;
       case 'cb':
         if (typeof (SendCBList[payload.data]) !== 'undefined') {
           SendCBList[payload.data]({});
@@ -587,6 +598,13 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
   Connection.addEventListener('datachannel', function(e) {
     DataChannel = e.channel;
     regChannelEvents(e.channel);
+
+    // signal remote peer that we're ready to receive
+    sendToDataChannel(JSON.stringify({
+      _internal: true,
+      type: 'ev',
+      data: 'readyToReceive'
+    }));
   });
 
   this.getConnection = function() {
