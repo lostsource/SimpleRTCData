@@ -366,14 +366,6 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     var msgData = MessageData[msgId];
 
     var chunkView8 = new Uint8Array(payloadChunk).subarray(10);
-
-    if (msgFlags & FLAG_LAST_CHUNK) {
-      var dataOver = (msgData.offset + CHUNK_SIZE) - msgSize;
-      if (dataOver > 0) {
-        chunkView8 = chunkView8.subarray(0, (chunkView8.length - dataOver));
-      }
-    }
-
     msgData.view.set(chunkView8, msgData.offset);
     msgData.offset += CHUNK_SIZE;
 
@@ -513,7 +505,7 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     }
     else {
       // queue messages
-      preConnectSendQueue.push(data);
+      preConnectSendQueue.push(data.slice());
     }
   }
 
@@ -704,13 +696,14 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
         dataReadStop = dataLength;
       }
 
+      var dataReadSize = dataReadStop - dataReadStart;
+
       chunkView8.set(
           dataView8.subarray(dataReadStart, dataReadStop),
           HeaderSize
       );
 
-      // make sure RTCDataChannel is connected (readyState = 'open')
-      sendToDataChannel(chunkData);
+      sendToDataChannel(dataReadSize === CHUNK_SIZE ? chunkData : chunkData.slice(0, HeaderSize + dataReadSize));
     }
   }
 
