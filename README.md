@@ -61,13 +61,13 @@ He should also listen for messages from Bert using the `on('data')` event:
     });
      
     
-At last send `erniesAnswer` to Bert so he can use it to call his `setAnswer` method:
+Finally, send `erniesAnswer` to Bert so he can use it to call his `setAnswer` method:
 
-    BertRTC.onChannelEvent('open',function(){
+    BertRTC.on('connect',function(){
        // Bert's ready to send messages
-       this.send('Hey Ernie!');
+       BertRTC.send('Hey Ernie!');
     });
-     
+
     BertRTC.setAnswer(erniesAnswer);
 
 ## Constructor
