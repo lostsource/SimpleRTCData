@@ -597,6 +597,8 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
 
   Connection.addEventListener('datachannel', function(e) {
     DataChannel = e.channel;
+    DataChannel.binaryType = 'arraybuffer';
+
     regChannelEvents(e.channel);
 
     // signal remote peer that we're ready to receive
@@ -818,6 +820,8 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
           reliable: true,
           ordered: true
         });
+
+    DataChannel.binaryType = 'arraybuffer';
 
     regChannelEvents(DataChannel);
 
