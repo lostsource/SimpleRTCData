@@ -97,6 +97,14 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
   // this will be drained after a succesful connection
   var preConnectSendQueue = [];
 
+  // if DataChannel.bufferedAmount exceeds 16mb on Chrome, the channel is closed
+  // to avoid this we pause channel when buffer hits 8mb and keep a buffer queue
+  // as soon as bufferAmmount is low, we send the queued data
+  var BUFFER_PAUSE_THRESHOLD = 0x800000; // ~8mb
+  var dataChannelPaused = false;
+  var pausedBufferQueue = [];
+
+
   function getRTCConnection() {
     var servers = inServers || {'iceServers': [
       {'url': 'stun:stun.l.google.com:19302'}
@@ -510,9 +518,38 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     delete SendRPList[replyId];
   }
 
-  function sendToDataChannel(data) {
+  function processBufferQueue() {
+    DataChannel.removeEventListener('bufferedamountlow', processBufferQueue);
+    dataChannelPaused = false;
+
+    while(pausedBufferQueue.length > 0) {
+      var nextData = pausedBufferQueue[0];
+      if(!sendToDataChannel(nextData, true)) {
+        break;
+      }
+
+      // remove sent chunk from queue
+      pausedBufferQueue.shift(); 
+    }
+  }
+
+  function sendToDataChannel(data, fromBufferQueue) {
     if (Connected && (DataChannel.readyState === 'open')) {
+      if(DataChannel.bufferedAmount > BUFFER_PAUSE_THRESHOLD && !dataChannelPaused) {
+        // pause till buffer amount low
+        dataChannelPaused = true;
+        DataChannel.addEventListener('bufferedamountlow', processBufferQueue);
+      }
+
+      if(dataChannelPaused) {
+        if(!fromBufferQueue) {
+          pausedBufferQueue.push(data.slice());
+        }
+        return false;
+      }
+      
       DataChannel.send(data);
+      return true;
     }
     else {
       // queue messages
@@ -598,6 +635,8 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
   Connection.addEventListener('datachannel', function(e) {
     DataChannel = e.channel;
     DataChannel.binaryType = 'arraybuffer';
+    // leaving this value set to default 0 fails to trigger bufferedamountlow event on firefox
+    DataChannel.bufferedAmountLowThreshold = 1; 
 
     regChannelEvents(e.channel);
 
@@ -822,6 +861,9 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
         });
 
     DataChannel.binaryType = 'arraybuffer';
+
+    // leaving this value set to default 0 fails to trigger bufferedamountlow event on firefox
+    DataChannel.bufferedAmountLowThreshold = 1; 
 
     regChannelEvents(DataChannel);
 
