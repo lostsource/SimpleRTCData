@@ -72,7 +72,8 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
 
   var SendMessageID = 0;
   var MessageData = {};
-  var CHUNK_SIZE = 1024 * 32; // 32k per chunk
+  var PACKET_HEADER_SIZE = 10;
+  var CHUNK_SIZE = 0x4000 - PACKET_HEADER_SIZE; // 16k per chunk (firefox max)
   var FLAG_FIRST_CHUNK = 0x01;
   var FLAG_LAST_CHUNK = 0x02;
 
@@ -723,11 +724,9 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
     *   9   Uint8   Data Type
     */
 
-    var HeaderSize = 10;
-
     var totalChunks = Math.ceil(dataLength / CHUNK_SIZE);
 
-    var chunkData = new ArrayBuffer(CHUNK_SIZE + HeaderSize);
+    var chunkData = new ArrayBuffer(CHUNK_SIZE + PACKET_HEADER_SIZE);
     var chunkView = new DataView(chunkData);
     chunkView.setUint32(0, SendMessageID, true);
     chunkView.setUint32(4, dataLength, true);
@@ -759,10 +758,10 @@ function SimpleRTCData(inServers, inConstraints, inDataChanOpts) {
 
       chunkView8.set(
           dataView8.subarray(dataReadStart, dataReadStop),
-          HeaderSize
+          PACKET_HEADER_SIZE
       );
 
-      sendToDataChannel(dataReadSize === CHUNK_SIZE ? chunkData : chunkData.slice(0, HeaderSize + dataReadSize));
+      sendToDataChannel(dataReadSize === CHUNK_SIZE ? chunkData : chunkData.slice(0, PACKET_HEADER_SIZE + dataReadSize));
     }
   }
 
